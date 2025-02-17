@@ -1,11 +1,14 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import OpenAI from 'openai';
-const openai = new OpenAI();
 
-export class UploadService {
-  private openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  async trasnLatbeAudioToText() {
+export class FileService {
+  async getHello() {
+    return '안녕';
+  }
+
+  async transLateAudioToText(audioFile: any) {
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream('/path/to/file/audio.mp3'),
       response_format: 'verbose_json',
