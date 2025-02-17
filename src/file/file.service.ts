@@ -8,7 +8,9 @@ export class UploadService {
   async trasnLatbeAudioToText() {
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream('/path/to/file/audio.mp3'),
+      response_format: 'verbose_json',
       model: 'whisper-1',
     });
+    console.log(transcription.text);
   }
 }
