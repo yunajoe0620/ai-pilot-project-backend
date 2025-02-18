@@ -1,26 +1,30 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FileController } from './file/file.controller';
 import { FileService } from './file/file.service';
 
+const SYNC = false;
+
+const dbConfig: TypeOrmModuleOptions = {
+  type: 'postgres',
+  host: 'localhost',
+  port: 5432,
+  username: 'postgres',
+  password: '1234',
+  database: 'ai-database',
+  entities: [],
+  synchronize: SYNC,
+} as TypeOrmModuleOptions;
+
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '1234',
-      database: 'ai-database',
-      entities: [],
-      synchronize: true,
-    }),
+    TypeOrmModule.forRoot(dbConfig),
     ConfigModule.forRoot({
       envFilePath: '.env',
-      isGlobal: true, // 어디서든 사용할 수 있게 설정
+      isGlobal: true,
     }),
   ],
   controllers: [AppController, FileController],
