@@ -8,7 +8,9 @@ export class ProblemController {
 
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
-    console.log('문제생성 클릭입니다아아');
-    console.log('Data', data);
+    // console.log('문제생성 클릭입니다아아');
+    const prompt = data.formattedData.trim();
+    console.log('prompt', prompt);
+    this.problemServiceRepository.generateProblems(prompt);
   }
 }

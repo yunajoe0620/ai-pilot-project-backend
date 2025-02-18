@@ -7,5 +7,34 @@ dotenv.config();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export class ProblemService {
-  async transLateAudioToText() {}
+  async generateProblems(prompt: string) {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'developer',
+          content: [
+            {
+              type: 'text',
+              text: `
+                  You are a helpful assistant that answers in korean                  
+                `,
+            },
+          ],
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      store: true,
+    });
+
+    console.log('response', response.choices[0].message.content);
+  }
 }
