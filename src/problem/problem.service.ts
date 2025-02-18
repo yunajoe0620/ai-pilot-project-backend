@@ -35,6 +35,8 @@ export class ProblemService {
       store: true,
     });
 
-    console.log('response', response.choices[0].message.content);
+    return {
+      response: response.choices[0].message.content,
+    };
   }
 }

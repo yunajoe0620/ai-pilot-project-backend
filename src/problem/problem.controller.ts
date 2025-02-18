@@ -10,7 +10,6 @@ export class ProblemController {
   async createProblems(@Body() data: CreateProblems) {
     // console.log('문제생성 클릭입니다아아');
     const prompt = data.formattedData.trim();
-    console.log('prompt', prompt);
-    this.problemServiceRepository.generateProblems(prompt);
+    return this.problemServiceRepository.generateProblems(prompt);
   }
 }
