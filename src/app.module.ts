@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FileController } from './file/file.controller';
 import { FileService } from './file/file.service';
+import { ProblemController } from './problem/problem.controller';
+import { ProblemService } from './problem/problem.service';
 
 const SYNC = false;
 
@@ -27,7 +29,7 @@ const dbConfig: TypeOrmModuleOptions = {
       isGlobal: true,
     }),
   ],
-  controllers: [AppController, FileController],
-  providers: [AppService, FileService],
+  controllers: [AppController, FileController, ProblemController],
+  providers: [AppService, FileService, ProblemService],
 })
 export class AppModule {}
