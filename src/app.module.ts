@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FileController } from './file/file.controller';
 import { FileService } from './file/file.service';
+import { RecommendationsModule } from './survey/recommendations.module';
 
 const SYNC = false;
 
@@ -26,6 +27,7 @@ const dbConfig: TypeOrmModuleOptions = {
       envFilePath: '.env',
       isGlobal: true,
     }),
+    RecommendationsModule,
   ],
   controllers: [AppController, FileController],
   providers: [AppService, FileService],
