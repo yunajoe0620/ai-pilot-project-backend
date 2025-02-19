@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { FileController } from './file/file.controller';
 import { FileService } from './file/file.service';
 import { RecommendationsModule } from './survey/recommendations.module';
+import { ProblemController } from './problem/problem.controller';
+import { ProblemService } from './problem/problem.service';
 
 const SYNC = false;
 
@@ -29,7 +31,7 @@ const dbConfig: TypeOrmModuleOptions = {
     }),
     RecommendationsModule,
   ],
-  controllers: [AppController, FileController],
-  providers: [AppService, FileService],
+  controllers: [AppController, FileController, ProblemController],
+  providers: [AppService, FileService, ProblemService],
 })
 export class AppModule {}

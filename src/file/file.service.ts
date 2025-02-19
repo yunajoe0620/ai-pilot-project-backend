@@ -6,7 +6,6 @@ import { createReadStream } from 'fs';
 import OpenAI from 'openai';
 dotenv.config();
 
-console.log('gggg', process.env.OPENAI_API_KEY);
 // C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
