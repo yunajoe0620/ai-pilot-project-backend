@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
-import * as child from 'node:child_process';
-import path from 'path';
+import * as path from 'path';
 
 @Injectable()
 export class AppService {
@@ -15,19 +14,31 @@ export class AppService {
   // fork(): 새로운 Node.js 프로세스를 생성하고 부모와 자식 간의 통신 채널을 설정하도록 특별히 설계된 spawn()의 특수 버전
 
   createTextFile(filename: string, content: string): string {
-    const filePath = path.join(__dirname, '..', 'files', filename);
-    console.log('filePath입니다아아', filePath);
-    // 만약에 경로가 없다면은 파일 만들기
+    console.log(
+      '파일이름입니다=======>>>>>>',
+      filename,
+      '내용======>>>>',
+      content,
+    );
+
+    // __dirname ==>   C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\dist
+    // console.log('dir__name======>>>>>>>>', __dirname);
+
+    //  C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\dist\files\LatexTest
+    const filePath = path.join(__dirname, 'files', 'latex', filename);
+
+    //   C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\dist\files\Latex에 폴더가 생긴다
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
-    // 내용을 안에 쓰기
+    // // 내용을 안에 쓰기
+    // 폴더안에 tex 라는 content가 생긴다
     fs.writeFileSync(`${filePath}.tex`, content);
 
-    child.exec(` cd files & dir & pdflatex ${filename}.tex`, (e, stdout) => {
-      console.log(e);
-      console.log(`Number of files ${stdout}`);
-    });
+    // child.exec(` cd files & dir & pdflatex ${filename}.tex`, (e, stdout) => {
+    //   console.log(e);
+    //   console.log(`Number of files ${stdout}`);
+    // });
 
-    return `LaTeX file ${filename} created successfully at ${filePath}`;
+    return `LaTeX file ${filename} created successfully`;
   }
 }

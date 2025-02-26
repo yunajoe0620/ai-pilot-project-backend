@@ -7,8 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FileController } from './file/file.controller';
 import { FileService } from './file/file.service';
-import { ProblemController } from './problem/problem.controller';
-import { ProblemService } from './problem/problem.service';
+import { ProblemModule } from './problem/problem.module';
 import { RecommendationsModule } from './survey/recommendations.module';
 
 // 주로 Single Page Application(SPA)처럼 정적 콘텐츠를 제공하는 데 유용
@@ -36,13 +35,14 @@ const dbConfig: TypeOrmModuleOptions = {
       envFilePath: '.env',
       isGlobal: true,
     }),
+    ProblemModule,
     RecommendationsModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'files'),
       // serveRoot: '/pdf', // URL 경로 설정 (ex: /images/image.jpg)
     }),
   ],
-  controllers: [AppController, FileController, ProblemController],
-  providers: [AppService, FileService, ProblemService],
+  controllers: [AppController, FileController],
+  providers: [AppService, FileService],
 })
 export class AppModule {}

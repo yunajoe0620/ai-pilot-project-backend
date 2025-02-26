@@ -21,6 +21,13 @@ export class AppController {
   //  \usepackage[T1]{fontenc}
   @Get('/test')
   getTest(): string {
+    // .Tex파일 기본 구조
+    // 저장하는 .Tex 파일 이름에는 공백이나 특수 문자를 사용X, 공백대신 밑줄(_)를  사용
+    // \documentclass{article}
+    // \begin{document}
+    // Hello, LaTeX!
+    // \end{document}
+
     const content = `
     \\documentclass{article}
     \\usepackage{amsmath}
