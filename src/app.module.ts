@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,7 +30,7 @@ const dbConfig: TypeOrmModuleOptions = {
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(dbConfig),
+    // TypeOrmModule.forRoot(dbConfig),
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
@@ -38,8 +38,8 @@ const dbConfig: TypeOrmModuleOptions = {
     ProblemModule,
     RecommendationsModule,
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'files'),
-      // serveRoot: '/pdf', // URL 경로 설정 (ex: /images/image.jpg)
+      rootPath: join(__dirname, '..', 'files', 'latex'),
+      serveRoot: '/pdf', // URL 경로 설정 (ex: /images/image.jpg)
     }),
   ],
   controllers: [AppController, FileController],

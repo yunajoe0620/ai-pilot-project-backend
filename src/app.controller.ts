@@ -41,7 +41,7 @@ export class AppController {
     다음 두 행렬 \\( A \\)와 \\( B \\)가 주어졌을 때, \\( A \\times B \\)를 구하시오.  
           \\[
           A = \\begin{bmatrix}
-          1 & 2 & 3 \\\\
+          10 & 2 & 3 \\\\
           4 & 5 & 6 \\\\
           \\end{bmatrix}
           \\quad
