@@ -31,8 +31,8 @@ export class AppController {
     const content = `
     \\documentclass{article}
     \\usepackage{amsmath}
-    \\usepackage[T1]{fontenc}      % T1 글꼴 인코딩
-    \\usepackage{amsmath}          % 수학 기호 처리 (선택 사항)
+    \\usepackage{fontspec}
+    \\usepackage{kotex} % 한국어 지원
 
     \\begin{document}
 
