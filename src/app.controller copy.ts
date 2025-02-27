@@ -38,33 +38,23 @@ export class AppController {
 
     \\title{행렬 문제}
     
-   result입니다아아아 ### 쉬운 난이도 문제 (객관식)
+    안녕하세요 지금은 테스트 입니다아앙아아아  젭알
 
-1. 다음 행렬 \\( A \\)의 크기는 무엇인가요?
-   \\[
-   A = \\begin{pmatrix}
-   1 & 2 & 3 \\\\
-   4 & 5 & 6 \\
-   \\end{pmatrix}
-   \\]
-   a) \\( 2 \times 3 \\)  
-   b) \\( 3 \times 2 \\)  
-   c) \\( 2 \times 2 \\)  
-   d) \\( 3 \times 3 \\)  
-
-2. 다음 행렬 \\( B \\)의 전치 행렬은 무엇인가요?
-   \\[
-   B = \begin{pmatrix}
-   7 & 8 \\\\
-   9 & 10 \\
-   \\end{pmatrix}
-   \\]
-   a) \\( \\begin{pmatrix} 7 & 9 \\ 8 & 10 \\end{pmatrix} \\)
-   b) \\( \\begin{pmatrix} 7 & 8 \\ 9 & 10 \\end{pmatrix} \\)
-   c) \\( \\begin{pmatrix} 8 & 10 \\ 7 & 9 \\end{pmatrix} \\)
-   d) \\( \\begin{pmatrix} 9 & 7 \\ 10 & 8 \\end{pmatrix} \\)  
+    다음 두 행렬 \\( A \\)와 \\( B \\)가 주어졌을 때, \\( A \\times B \\)를 구하시오.  
+          \\[
+          A = \\begin{bmatrix}
+          10 & 2 & 3 \\\\
+          4 & 5 & 6 \\\\
+          \\end{bmatrix}
+          \\quad
+          B = \\begin{bmatrix}
+          7 & 8 \\\\
+          9 & 10 \\\\
+          11 & 12 \\\\
+          \\end{bmatrix}
+          \\]
     \\end{document}      
-  `;
+    `;
 
     return this.appService.createTextFile('LatexTest', content);
   }

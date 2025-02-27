@@ -15,16 +15,32 @@ export class ProblemController {
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
     const prompt = data.promptData.trim();
-    // 결과값이 promise이다
+    // gpt 결과값값
     const result = await this.problemServiceRepository.generateProblems(prompt);
-    // const pdfresult = await this.pdfServiceRepository.createTextFile(
-    //   'pdfFile',
-    //   result.response,
-    // );
+
+    console.log('result입니다아아아', result.response);
+
+    const docs = `
+        \\documentclass{article}
+        \\usepackage{amsmath}
+        \\usepackage{fontspec}
+        \\usepackage{kotex} % 한국어 지원  
+
+        \\begin{document} 
+    
+        ${result.response}      
+        \\end{document} 
+    `;
+
+    // gpt결과값에 의한 pdf결과값
+    const pdfresult = await this.pdfServiceRepository.createTextFile(
+      'pdfFile',
+      docs,
+    );
     if (result.response) {
       return {
         status: 200,
-        result,
+        pdfresult,
       };
     }
     return {
