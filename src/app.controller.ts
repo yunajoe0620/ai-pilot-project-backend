@@ -28,43 +28,82 @@ export class AppController {
     // Hello, LaTeX!
     // \end{document}
 
-    const content = `
-    \\documentclass{article}
-    \\usepackage{amsmath}
-    \\usepackage{fontspec}
-    \\usepackage{kotex} % 한국어 지원
+    const content = `\\documentclass{article}
+\\usepackage{amsmath}
 
-    \\begin{document}
+\\begin{document}
 
-    \\title{행렬 문제}
-    
-   result입니다아아아 ### 쉬운 난이도 문제 (객관식)
+\\section*{중학생 수준 행렬 문제}
 
-1. 다음 행렬 \\( A \\)의 크기는 무엇인가요?
-   \\[
-   A = \\begin{pmatrix}
-   1 & 2 & 3 \\\\
-   4 & 5 & 6 \\
-   \\end{pmatrix}
-   \\]
-   a) \\( 2 \times 3 \\)  
-   b) \\( 3 \times 2 \\)  
-   c) \\( 2 \times 2 \\)  
-   d) \\( 3 \times 3 \\)  
+\\begin{enumerate}
 
-2. 다음 행렬 \\( B \\)의 전치 행렬은 무엇인가요?
-   \\[
-   B = \begin{pmatrix}
-   7 & 8 \\\\
-   9 & 10 \\
-   \\end{pmatrix}
-   \\]
-   a) \\( \\begin{pmatrix} 7 & 9 \\ 8 & 10 \\end{pmatrix} \\)
-   b) \\( \\begin{pmatrix} 7 & 8 \\ 9 & 10 \\end{pmatrix} \\)
-   c) \\( \\begin{pmatrix} 8 & 10 \\ 7 & 9 \\end{pmatrix} \\)
-   d) \\( \\begin{pmatrix} 9 & 7 \\ 10 & 8 \\end{pmatrix} \\)  
-    \\end{document}      
-  `;
+    % 문제 1
+    \\item 다음 행렬을 더하세요.
+    \\[
+    A = \\begin{bmatrix} 2 & 4 \\\\ 3 & 5 \\end{bmatrix}, \\quad
+    B = \\begin{bmatrix} 1 & 3 \\\\ 2 & 4 \\end{bmatrix}
+    \\]
+
+    % 문제 2
+    \\item 다음 행렬을 빼세요.
+    \\[
+    A = \\begin{bmatrix} 6 & 7 \\\\ 4 & 3 \\end{bmatrix}, \\quad
+    B = \\begin{bmatrix} 2 & 5 \\\\ 1 & 1 \\end{bmatrix}
+    \\]
+
+    % 문제 3
+    \\item 다음 두 행렬을 곱하세요.
+    \\[
+    A = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}, \\quad
+    B = \\begin{bmatrix} 2 & 0 \\\\ 1 & 3 \\end{bmatrix}
+    \\]
+
+    % 문제 4
+    \\item 다음 스칼라 곱을 계산하세요.
+    \\[
+    k = 3, \\quad A = \\begin{bmatrix} 2 & 4 \\\\ 6 & 8 \\end{bmatrix}
+    \\]
+
+    % 문제 5
+    \\item 다음 행렬의 전치 행렬을 구하세요.
+    \\[
+    A = \\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}
+    \\]
+
+    % 문제 6
+    \\item 다음 행렬의 행렬식을 계산하세요.
+    \\[
+    A = \\begin{bmatrix} 3 & 2 \\\\ 1 & 4 \\end{bmatrix}
+    \\]
+
+    % 문제 7
+    \\item 다음 행렬의 역행렬을 구하세요.
+    \\[
+    A = \\begin{bmatrix} 2 & 1 \\\\ 1 & 3 \\end{bmatrix}
+    \\]
+
+    % 문제 8
+    \\item 다음 행렬 방정식을 푸세요.
+    \\[
+    \\begin{bmatrix} 2 & 1 \\\\ 1 & 3 \\end{bmatrix} \\begin{bmatrix} x \\\\ y \\end{bmatrix} = \\begin{bmatrix} 5 \\\\ 8 \\end{bmatrix}
+    \\]
+
+    % 문제 9
+    \\item 다음 행렬의 대각 원소의 합(대각합)을 구하세요.
+    \\[
+    A = \\begin{bmatrix} 7 & 2 \\\\ 4 & 5 \\end{bmatrix}
+    \\]
+
+    % 문제 10
+    \\item 두 행렬 $A$, $B$가 아래와 같을 때, $A + 2B$를 구하세요.
+    \\[
+    A = \\begin{bmatrix} 3 & 1 \\\\ 2 & 4 \\end{bmatrix}, \\quad
+    B = \\begin{bmatrix} 1 & 0 \\\\ 5 & 2 \\end{bmatrix}
+    \\]
+
+\\end{enumerate}
+
+\\end{document}`;
 
     return this.appService.createTextFile('LatexTest', content);
   }

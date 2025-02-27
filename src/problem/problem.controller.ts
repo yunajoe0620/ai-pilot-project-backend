@@ -19,16 +19,16 @@ export class ProblemController {
     const result = await this.problemServiceRepository.generateProblems(prompt);
 
     console.log('result입니다아아아', result.response);
+    const newResponse = result.response.replaceAll('#', '');
 
     const docs = `
-        \\documentclass{article}
+        \\documentclass[fleqn]{article}      
         \\usepackage{amsmath}
         \\usepackage{fontspec}
         \\usepackage{kotex} % 한국어 지원  
 
-        \\begin{document} 
-    
-        ${result.response}      
+        \\begin{document}      
+        ${newResponse}      
         \\end{document} 
     `;
 
