@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FileController } from './file/file.controller';
 import { FileService } from './file/file.service';
+import { PdfModule } from './pdf/pdf.module';
 import { ProblemModule } from './problem/problem.module';
 import { RecommendationsModule } from './survey/recommendations.module';
 
@@ -36,10 +37,11 @@ const dbConfig: TypeOrmModuleOptions = {
       isGlobal: true,
     }),
     ProblemModule,
+    PdfModule,
     RecommendationsModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'files', 'latex'),
-      serveRoot: '/pdf', // URL 경로 설정 (ex: /images/image.jpg)
+      serveRoot: '/pdf', // pdf/pdf파일이름 이렇게 지정이 된다.
     }),
   ],
   controllers: [AppController, FileController],

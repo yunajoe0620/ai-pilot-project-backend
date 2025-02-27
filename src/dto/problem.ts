@@ -1,3 +1,3 @@
 export class CreateProblems {
-  formattedData: string;
+  promptData: string;
 }

@@ -37,7 +37,9 @@ export class AppController {
     \\begin{document}
 
     \\title{행렬 문제}
-
+    
+    안녕하세요 지금은 테스트 입니다아앙아아아
+    하이잉인인
     다음 두 행렬 \\( A \\)와 \\( B \\)가 주어졌을 때, \\( A \\times B \\)를 구하시오.  
           \\[
           A = \\begin{bmatrix}
