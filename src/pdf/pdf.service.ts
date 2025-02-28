@@ -6,7 +6,7 @@ import * as path from 'path';
 
 @Injectable()
 export class PdfService {
-  createTextFile(filename: string, content: string) {
+  createTextFile(filename: string, content: string, answer: string) {
     return new Promise((resolve, reject) => {
       //  Unix timestamp in milliseconds
       const millisecond = moment().valueOf();
@@ -15,6 +15,7 @@ export class PdfService {
 
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(`${filePath}.tex`, content);
+
       child.exec(
         ` cd files & cd latex & dir & xelatex ${timeStampWithFilename}.tex`,
         (e) => {

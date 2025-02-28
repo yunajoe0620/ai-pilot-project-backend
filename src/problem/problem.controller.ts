@@ -18,15 +18,30 @@ export class ProblemController {
     // gpt 결과값
     const result = await this.problemServiceRepository.generateProblems(prompt);
     const newResponse = result.response.replaceAll('#', '');
+    // console.log('newResponse', newResponse);
+    const [problems, answers] = newResponse.split('*****answer*****');
+    console.log('problems', problems);
+    console.log('answers', answers);
 
-    const docs = `
+    const problemdocs = `
         \\documentclass[fleqn]{article}      
         \\usepackage{amsmath}
         \\usepackage{fontspec}
         \\usepackage{kotex} % 한국어 지원  
 
         \\begin{document}      
-        ${newResponse}      
+        ${problems}      
+        \\end{document} 
+    `;
+
+    const answerDocs = `
+       \\documentclass[fleqn]{article}      
+        \\usepackage{amsmath}
+        \\usepackage{fontspec}
+        \\usepackage{kotex} % 한국어 지원  
+
+        \\begin{document}      
+        ${answers}      
         \\end{document} 
     `;
 
@@ -35,7 +50,8 @@ export class ProblemController {
     try {
       const pdfresult = await this.pdfServiceRepository.createTextFile(
         'pdfFile',
-        docs,
+        problemdocs,
+        answerDocs,
       );
       console.log('pdfResult', pdfresult);
       // 최종결과값
