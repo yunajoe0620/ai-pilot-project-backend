@@ -35,6 +35,7 @@ export class ProblemController {
       'pdfFile',
       docs,
     );
+    console.log('pdfresult', pdfresult);
     // 최종결과값
     if (result.response) {
       return {
