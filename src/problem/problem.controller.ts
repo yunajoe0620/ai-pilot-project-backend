@@ -15,11 +15,12 @@ export class ProblemController {
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
     const prompt = data.promptData.trim();
-    // gpt 결과값값
+    // gpt 결과값
     const result = await this.problemServiceRepository.generateProblems(prompt);
 
     console.log('result입니다아아아', result.response);
     const newResponse = result.response.replaceAll('#', '');
+    console.log('newResponse =======>>>>>>>>', newResponse);
 
     const docs = `
         \\documentclass[fleqn]{article}      
@@ -37,6 +38,7 @@ export class ProblemController {
       'pdfFile',
       docs,
     );
+    // 최종결과값
     if (result.response) {
       return {
         status: 200,
