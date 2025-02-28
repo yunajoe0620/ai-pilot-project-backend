@@ -33,7 +33,6 @@ export class ProblemController {
         ${problems}      
         \\end{document} 
     `;
-
     const answerDocs = `
        \\documentclass[fleqn]{article}      
         \\usepackage{amsmath}
