@@ -31,20 +31,24 @@ export class ProblemController {
     `;
 
     // gpt결과값에 의한 pdf결과값
-    const pdfresult = await this.pdfServiceRepository.createTextFile(
-      'pdfFile',
-      docs,
-    );
-    console.log('pdfresult', pdfresult);
-    // 최종결과값
-    if (result.response) {
+
+    try {
+      const pdfresult = await this.pdfServiceRepository.createTextFile(
+        'pdfFile',
+        docs,
+      );
+      console.log('pdfResult', pdfresult);
+      // 최종결과값
+      if (result.response) {
+        return {
+          status: 200,
+          pdfresult,
+        };
+      }
+    } catch (error) {
       return {
-        status: 200,
-        pdfresult,
+        status: 400,
       };
     }
-    return {
-      status: 400,
-    };
   }
 }
