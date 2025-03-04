@@ -50,7 +50,7 @@ export class ProblemController {
       const pdfresult = await this.pdfServiceRepository.createTextFile(
         'pdfFile',
         problemdocs,
-        answerDocs,
+        // answerDocs,
       );
       console.log('pdfResult', pdfresult);
       // 최종결과값
@@ -61,6 +61,7 @@ export class ProblemController {
         };
       }
     } catch (error) {
+      console.log('error ===>>>>>>', error);
       return {
         status: 400,
       };

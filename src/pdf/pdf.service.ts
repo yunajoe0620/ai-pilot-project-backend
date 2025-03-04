@@ -6,7 +6,7 @@ import * as path from 'path';
 
 @Injectable()
 export class PdfService {
-  createTextFile(filename: string, content: string, answer: string) {
+  createTextFile(filename: string, content: string) {
     return new Promise((resolve, reject) => {
       //  Unix timestamp in milliseconds
       const millisecond = moment().valueOf();
