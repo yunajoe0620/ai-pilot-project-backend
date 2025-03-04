@@ -14,7 +14,9 @@ export class ProblemController {
   // 생성을 하고 다시
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
+    console.log('데이터입니다아아 =====>>>>>>>>>', data);
     const prompt = data.promptData.trim();
+    console.log('prompt입니다아아', prompt);
     // gpt 결과값
     const result = await this.problemServiceRepository.generateProblems(prompt);
     const newResponse = result.response.replaceAll('#', '');
@@ -45,14 +47,12 @@ export class ProblemController {
     `;
 
     // gpt결과값에 의한 pdf결과값
-
     try {
       const pdfresult = await this.pdfServiceRepository.createTextFile(
         'pdfFile',
         problemdocs,
         // answerDocs,
       );
-      console.log('pdfResult', pdfresult);
       // 최종결과값
       if (result.response) {
         return {

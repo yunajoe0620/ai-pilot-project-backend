@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as moment from 'moment';
 import * as child from 'node:child_process';
 import * as path from 'path';
-
 @Injectable()
 export class PdfService {
   createTextFile(filename: string, content: string) {
@@ -19,9 +18,8 @@ export class PdfService {
       child.exec(
         ` cd files & cd latex & dir & xelatex ${timeStampWithFilename}.tex`,
         (e) => {
-          console.log(e);
+          console.log('나는에러다아앙', e);
 
-          // C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\files\latex\pdfFile1740719793115.pdf
           const pdfFilePath = path.resolve(
             'files',
             'latex',
