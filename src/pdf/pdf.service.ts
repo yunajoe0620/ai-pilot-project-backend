@@ -7,7 +7,6 @@ import * as path from 'path';
 export class PdfService {
   createTextFile(filename: string, content: string) {
     return new Promise((resolve, reject) => {
-      //  Unix timestamp in milliseconds
       const millisecond = moment().valueOf();
       const timeStampWithFilename = `${filename}${millisecond}`;
       const filePath = path.resolve('files', 'latex', timeStampWithFilename);
@@ -18,8 +17,6 @@ export class PdfService {
       child.exec(
         ` cd files & cd latex & dir & xelatex ${timeStampWithFilename}.tex`,
         (e) => {
-          console.log('나는에러다아앙', e);
-
           const pdfFilePath = path.resolve(
             'files',
             'latex',
