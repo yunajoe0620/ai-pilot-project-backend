@@ -52,20 +52,22 @@ export class ProblemController {
         answerDocs,
       );
 
-      const isFinished = Promise.all([problemPdfresult, answerPdfresult]);
-      console.log('isFinished222222', isFinished);
+      const isFinished = await Promise.all([problemPdfresult, answerPdfresult]);
 
-      // 최종결과값
-      if (result.response) {
+      if (result.response && isFinished.length === 2) {
         return {
           status: 200,
+          message: '문제가 제대로 생성되었습니다',
           problemPdfresult,
+          answerPdfresult,
         };
       }
-    } catch (error) {
       return {
         status: 400,
+        message: '문제가 제대로 생성되지 않았습니다',
       };
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -100,17 +102,30 @@ export class ProblemController {
     \\end{document} 
 `;
     try {
-      const pdfresult = await this.pdfServiceRepository.createTextFile(
-        'pdfFile',
+      const problemPdfresult = await this.pdfServiceRepository.createTextFile(
+        'problemPdf',
         problemdocs,
       );
+
+      const answerPdfresult = await this.pdfServiceRepository.createTextFile(
+        'answerPdf',
+        answerDocs,
+      );
       // 최종결과값
-      if (result.response) {
+      const isFinished = await Promise.all([problemPdfresult, answerPdfresult]);
+
+      if (result.response && isFinished.length === 2) {
         return {
           status: 200,
-          pdfresult,
+          message: '문제가 제대로 생성되었습니다',
+          problemPdfresult,
+          answerPdfresult,
         };
       }
+      return {
+        status: 400,
+        message: '문제가 제대로 생성되지 않았습니다',
+      };
     } catch (error) {
       return {
         status: 400,
