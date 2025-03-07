@@ -17,8 +17,6 @@ export class ProblemController {
     const result = await this.problemServiceRepository.generateProblems(prompt);
     const newResponse = result.response.replaceAll('#', '');
     const [problems, answers] = newResponse.split('*****answer*****');
-    console.log('problems', problems);
-    console.log('answers', answers);
 
     const problemdocs = `
         \\documentclass[fleqn]{article}      
@@ -79,8 +77,7 @@ export class ProblemController {
       await this.problemServiceRepository.generateDeepSeekproblems(prompt);
     const newResponse = result.response.replaceAll('#', '');
     const [problems, answers] = newResponse.split('*****answer*****');
-    console.log('problems', problems);
-    console.log('answers', answers);
+
     const problemdocs = `
     \\documentclass[fleqn]{article}      
     \\usepackage{amsmath}
