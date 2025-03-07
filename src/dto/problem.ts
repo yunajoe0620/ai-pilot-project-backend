@@ -1,3 +1,7 @@
 export class CreateProblems {
-  formattedData: string;
+  promptData: string;
+}
+
+export class ProblemDocs {
+  problemdocs: string;
 }

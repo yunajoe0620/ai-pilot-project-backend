@@ -20,6 +20,5 @@ export class FileService {
       response_format: 'verbose_json',
       model: 'whisper-1',
     });
-    console.log(transcription.text);
   }
 }
