@@ -13,7 +13,7 @@ const deepSeekOpenAI = new OpenAI({
 export class ProblemService {
   async generateProblems(prompt: string) {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'developer',
@@ -74,7 +74,6 @@ export class ProblemService {
       store: true,
     });
 
-    console.log('response', response.choices[0].message.content);
     return {
       response: response.choices[0].message.content,
     };
