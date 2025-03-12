@@ -13,7 +13,7 @@ const deepSeekOpenAI = new OpenAI({
 export class ProblemService {
   async generateProblems(prompt: string) {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'developer',
@@ -44,13 +44,12 @@ export class ProblemService {
     };
   }
 
-  // for gpt
+  // for deepseek
   async generateDeepSeekproblems(prompt: string) {
     const response = await deepSeekOpenAI.chat.completions.create({
       model: 'deepseek-chat',
       messages: [
         {
-          // `system`, `user`, `assistant`, `tool
           role: 'system',
           content: [
             {
