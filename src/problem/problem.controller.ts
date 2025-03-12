@@ -10,11 +10,14 @@ export class ProblemController {
     private readonly pdfServiceRepository: PdfService,
   ) {}
 
-  // gpt
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
     const prompt = data.promptData.trim();
-    const result = await this.problemServiceRepository.generateProblems(prompt);
+    const model = data.model.trim();
+    const result = await this.problemServiceRepository.generateProblems(
+      prompt,
+      model,
+    );
     const newResponse = result.response.replaceAll('#', '');
     const [problems, answers] = newResponse.split('*****answer*****');
 
@@ -58,6 +61,7 @@ export class ProblemController {
           message: '문제가 제대로 생성되었습니다',
           problemPdfresult,
           answerPdfresult,
+          result,
         };
       }
       return {
