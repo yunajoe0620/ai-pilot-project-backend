@@ -10,7 +10,6 @@ export class ProblemController {
     private readonly pdfServiceRepository: PdfService,
   ) {}
 
-  // gpt
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
     const prompt = data.promptData.trim();
