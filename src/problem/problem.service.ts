@@ -12,36 +12,40 @@ const deepSeekOpenAI = new OpenAI({
 export class ProblemService {
   async generateProblems(prompt: string, model: string) {
     console.log('선택한 gpt Model', model);
-    const response = await openai.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: 'developer',
-          content: [
-            {
-              type: 'text',
-              text: `
-                  You are a helpful assistant that answers in korean                  
-                `,
-            },
-          ],
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: prompt,
-            },
-          ],
-        },
-      ],
-      store: true,
-    });
 
-    return {
-      response: response.choices[0].message.content,
-    };
+    try {
+      const response = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: [
+              {
+                type: 'text',
+                text: `
+                    You are a helpful assistant that answers in korean                  
+                  `,
+              },
+            ],
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: prompt,
+              },
+            ],
+          },
+        ],
+        temperature: 0.7,
+      });
+      return {
+        response: response.choices[0].message.content,
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
   // for deepseek
