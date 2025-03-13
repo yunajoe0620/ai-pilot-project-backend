@@ -11,6 +11,7 @@ const deepSeekOpenAI = new OpenAI({
 
 export class ProblemService {
   async generateProblems(prompt: string, model: string) {
+    console.log('선택한 gpt Model', model);
     const response = await openai.chat.completions.create({
       model: model,
       messages: [
@@ -44,9 +45,10 @@ export class ProblemService {
   }
 
   // for deepseek
-  async generateDeepSeekproblems(prompt: string) {
+  async generateDeepSeekproblems(prompt: string, model: string) {
+    console.log('선택한 deepSeek Model', model);
     const response = await deepSeekOpenAI.chat.completions.create({
-      model: 'deepseek-chat',
+      model: model,
       messages: [
         {
           role: 'system',

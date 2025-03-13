@@ -77,8 +77,11 @@ export class ProblemController {
   @Post('generate/deekseek')
   async createDeeakSeekProblems(@Body() data: CreateProblems) {
     const prompt = data.promptData.trim();
-    const result =
-      await this.problemServiceRepository.generateDeepSeekproblems(prompt);
+    const model = data.model.trim();
+    const result = await this.problemServiceRepository.generateDeepSeekproblems(
+      prompt,
+      model,
+    );
     const newResponse = result.response.replaceAll('#', '');
     const [problems, answers] = newResponse.split('*****answer*****');
 
@@ -121,6 +124,7 @@ export class ProblemController {
           message: '문제가 제대로 생성되었습니다',
           problemPdfresult,
           answerPdfresult,
+          result,
         };
       }
       return {
@@ -128,9 +132,7 @@ export class ProblemController {
         message: '문제가 제대로 생성되지 않았습니다',
       };
     } catch (error) {
-      return {
-        status: 400,
-      };
+      throw error;
     }
   }
 }
