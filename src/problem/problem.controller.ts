@@ -12,8 +12,23 @@ export class ProblemController {
 
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
-    const prompt = data.promptData.trim();
-    const model = data.model.trim();
+    console.log(' data.promptData.', data.promptData);
+    console.log(' data.promptData.', data.model);
+
+    // data.promptData. undefined
+    // [Nest] 25400  - 2025. 03. 13. 오후 2:38:20   ERROR [ExceptionsHandler] TypeError: Cannot read properties of undefined (reading 'trim')
+    //     at ProblemController.createProblems (C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\src\problem\problem.controller.ts:19:30)
+    //     at C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\node_modules\@nestjs\core\router\router-execution-context.js:38:29
+    //     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    //     at async C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\node_modules\@nestjs\core\router\router-execution-context.js:46:28
+    //     at async C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\node_modules\@nestjs\core\router\router-proxy.js:9:17
+    //  data.promptData. 다음 조건에 맞게 LaTeX 포맷으로 고등학교 수학 문제를 생성해줘.
+
+    // **주제**: 고등수학 (상) - 방정식과 부등식 - 연립이차방정식
+    // **문항 수**: 20문항
+    // - 쉬운 문제 5문항
+    const prompt = data?.promptData?.trim();
+    const model = data?.model?.trim();
     const result = await this.problemServiceRepository.generateProblems(
       prompt,
       model,
