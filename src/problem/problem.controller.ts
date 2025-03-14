@@ -10,10 +10,56 @@ export class ProblemController {
     private readonly pdfServiceRepository: PdfService,
   ) {}
 
+  // GPT OUTPUT결과값 return하기
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
     console.log(' data.promptData.', data.promptData);
     console.log(' data.promptData.', data.model);
+
+    try {
+      const prompt = data.promptData.trim();
+      const model = data.model.trim();
+      const result = await this.problemServiceRepository.generateProblems(
+        prompt,
+        model,
+      );
+      const newResponse = result.response.replaceAll('#', '');
+      const [problems, answers] = newResponse.split('*****answer*****');
+      const problemDocs = `
+      \\documentclass[fleqn]{article}      
+      \\usepackage{amsmath}
+      \\usepackage{fontspec}
+      \\usepackage{kotex} % 한국어 지원  
+
+      \\begin{document}      
+      ${problems}      
+      \\end{document} 
+  `;
+      const answerDocs = `
+     \\documentclass[fleqn]{article}      
+      \\usepackage{amsmath}
+      \\usepackage{fontspec}
+      \\usepackage{kotex} % 한국어 지원  
+
+      \\begin{document}      
+      ${answers}      
+      \\end{document} 
+  `;
+      if (result.response) {
+        return {
+          status: 200,
+          message: 'AI OUTPUT이 생성 되었습니다',
+          problemDocs,
+          answerDocs,
+        };
+      }
+      return {
+        status: 400,
+        message: 'AI OUTPUT이 제대로 생성되지 않았습니다',
+      };
+    } catch (error) {
+      throw error;
+    }
 
     const prompt = data.promptData.trim();
     const model = data.model.trim();
@@ -45,35 +91,37 @@ export class ProblemController {
         \\end{document} 
     `;
 
-    try {
-      const problemPdfresult = await this.pdfServiceRepository.createTextFile(
-        'problemPdf',
-        problemdocs,
-      );
+    return {};
 
-      const answerPdfresult = await this.pdfServiceRepository.createTextFile(
-        'answerPdf',
-        answerDocs,
-      );
+    // try {
+    //   const problemPdfresult = await this.pdfServiceRepository.createTextFile(
+    //     'problemPdf',
+    //     problemdocs,
+    //   );
 
-      const isFinished = await Promise.all([problemPdfresult, answerPdfresult]);
+    //   const answerPdfresult = await this.pdfServiceRepository.createTextFile(
+    //     'answerPdf',
+    //     answerDocs,
+    //   );
 
-      if (result.response && isFinished.length === 2) {
-        return {
-          status: 200,
-          message: '문제가 제대로 생성되었습니다',
-          problemPdfresult,
-          answerPdfresult,
-          result,
-        };
-      }
-      return {
-        status: 400,
-        message: '문제가 제대로 생성되지 않았습니다',
-      };
-    } catch (error) {
-      throw error;
-    }
+    //   const isFinished = await Promise.all([problemPdfresult, answerPdfresult]);
+
+    //   if (result.response && isFinished.length === 2) {
+    //     return {
+    //       status: 200,
+    //       message: '문제가 제대로 생성되었습니다',
+    //       problemPdfresult,
+    //       answerPdfresult,
+    //       result,
+    //     };
+    //   }
+    //   return {
+    //     status: 400,
+    //     message: '문제가 제대로 생성되지 않았습니다',
+    //   };
+    // } catch (error) {
+    //   throw error;
+    // }
   }
 
   // for deek seek
