@@ -1,31 +1,42 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { RecommendationsService } from './recommendations.service';
 
 @Controller()
 export class RecommendationsController {
-  constructor(private readonly recommendationsService: RecommendationsService) {}
+  constructor(
+    private readonly recommendationsService: RecommendationsService,
+  ) {}
 
   @Post('recommendations')
   async create(@Body() userResponses: any) {
-    const result = await this.recommendationsService.getRecommendations(userResponses);
+    const result =
+      await this.recommendationsService.getRecommendations(userResponses);
     return { recommendation: result };
   }
 
   @Post('other-majors')
   async otherMajors(@Body() userResponses: any) {
-    const result = await this.recommendationsService.getAlternativeMajors(userResponses);
+    const result =
+      await this.recommendationsService.getAlternativeMajors(userResponses);
     return { alternativeRecommendation: result };
   }
 
   @Post('/major-suggestion')
-  async handleMajorSuggestion(@Body() body: { suggestion: string; userResponses?: any }): Promise<any> {
+  async handleMajorSuggestion(
+    @Body() body: { suggestion: string; userResponses?: any },
+  ): Promise<any> {
     const { suggestion, userResponses = {} } = body;
-    const response = await this.recommendationsService.getMajorSuggestion(suggestion, userResponses);
+    const response = await this.recommendationsService.getMajorSuggestion(
+      suggestion,
+      userResponses,
+    );
     return response;
   }
 
   @Post('/additional-majors')
-  async handleAdditionalMajors(@Body() body: { additionalResponses: any, originalResponses: any }): Promise<any> {
+  async handleAdditionalMajors(
+    @Body() body: { additionalResponses: any; originalResponses: any },
+  ): Promise<any> {
     const prompt = `
       학생이 다음과 같이 설문에 응답했습니다:
       ${JSON.stringify(body.originalResponses, null, 2)}
@@ -52,6 +63,8 @@ export class RecommendationsController {
         ]
       }
       `;
-        return await this.recommendationsService.getAlternativeMajorsWithPrompt(prompt);
-      }
-    }
+    return await this.recommendationsService.getAlternativeMajorsWithPrompt(
+      prompt,
+    );
+  }
+}

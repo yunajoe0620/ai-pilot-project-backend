@@ -15,8 +15,9 @@ export class PdfService {
       fs.writeFileSync(`${filePath}.tex`, content);
 
       child.exec(
-        ` cd files & cd latex & dir & xelatex ${timeStampWithFilename}.tex`,
-        (e) => {
+        ` cd files & cd latex & dir & lualatex ${timeStampWithFilename}.tex`,
+        (e, stdout) => {
+          console.log('eeeee', e, stdout);
           const pdfFilePath = path.resolve(
             'files',
             'latex',

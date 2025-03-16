@@ -1,19 +1,15 @@
 import { Body, Controller, Post } from '@nestjs/common';
+import { Docs } from 'src/dto/problem';
 import { PdfService } from './pdf.service';
 
-type Data = {
-  problem: string;
-  answer: string;
-};
 @Controller('pdf')
 export class PdfController {
   constructor(private readonly pdfServiceRepository: PdfService) {}
 
   @Post('generate')
-  async createProblems(@Body() data: Data) {
+  async createProblems(@Body() data: Docs) {
     const problemDocs = data.problem;
     const answerDocs = data.answer;
-    console.log('problemDocs', problemDocs, answerDocs);
 
     try {
       const problemPdfresult = await this.pdfServiceRepository.createTextFile(

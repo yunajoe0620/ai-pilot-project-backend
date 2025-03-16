@@ -6,3 +6,8 @@ export class CreateProblems {
 export class ProblemDocs {
   problemdocs: string;
 }
+
+export class Docs {
+  problem: string;
+  answer: string;
+}
