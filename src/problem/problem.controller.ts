@@ -49,6 +49,7 @@ export class ProblemController {
         return {
           status: 200,
           message: 'AI OUTPUT이 생성 되었습니다',
+          result,
           problemDocs,
           answerDocs,
         };
@@ -100,6 +101,7 @@ export class ProblemController {
         return {
           status: 200,
           message: 'AI OUTPUT이 생성 되었습니다',
+          result,
           problemDocs,
           answerDocs,
         };
