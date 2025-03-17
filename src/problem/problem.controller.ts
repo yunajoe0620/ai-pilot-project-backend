@@ -28,6 +28,7 @@ export class ProblemController {
       const problemDocs = `
       \\documentclass[fleqn]{article}      
       \\usepackage{amsmath}
+      \\usepackage{amssymb} 
       \\usepackage{fontspec}
       \\usepackage{kotex} % 한국어 지원  
 
@@ -36,8 +37,9 @@ export class ProblemController {
       \\end{document} 
   `;
       const answerDocs = `
-     \\documentclass[fleqn]{article}      
+      \\documentclass[fleqn]{article}      
       \\usepackage{amsmath}
+      \\usepackage{amssymb} 
       \\usepackage{fontspec}
       \\usepackage{kotex} % 한국어 지원  
 
@@ -80,6 +82,7 @@ export class ProblemController {
       const problemDocs = `
       \\documentclass[fleqn]{article}      
       \\usepackage{amsmath}
+      \\usepackage{amssymb} 
       \\usepackage{fontspec}
       \\usepackage{kotex} % 한국어 지원  
   
@@ -90,6 +93,7 @@ export class ProblemController {
       const answerDocs = `
      \\documentclass[fleqn]{article}      
       \\usepackage{amsmath}
+      \\usepackage{amssymb} 
       \\usepackage{fontspec}
       \\usepackage{kotex} % 한국어 지원  
   
@@ -124,6 +128,7 @@ export class ProblemController {
     const problemdocs = `
     \\documentclass[fleqn]{article}      
     \\usepackage{amsmath}
+    \\usepackage{amssymb} 
     \\usepackage{fontspec}
     \\usepackage{kotex} % 한국어 지원  
 
@@ -134,6 +139,7 @@ export class ProblemController {
     const answerDocs = `
    \\documentclass[fleqn]{article}      
     \\usepackage{amsmath}
+    \\usepackage{amssymb} 
     \\usepackage{fontspec}
     \\usepackage{kotex} % 한국어 지원  
 
