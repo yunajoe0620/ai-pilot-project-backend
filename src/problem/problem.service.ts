@@ -21,7 +21,7 @@ export class ProblemService {
               {
                 type: 'text',
                 text: `
-                    You are a helpful assistant that answers in korean                  
+                    You are a math tutor that answers in korean                  
                   `,
               },
             ],
@@ -60,7 +60,7 @@ export class ProblemService {
               {
                 type: 'text',
                 text: `
-                    You are a helpful assistant that answers in korean                  
+                    You are a math tutor that answers in korean                  
                   `,
               },
             ],
