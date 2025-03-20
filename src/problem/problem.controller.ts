@@ -13,9 +13,6 @@ export class ProblemController {
   // GPT OUTPUT결과값 return하기
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
-    console.log(' data.promptData.', data.promptData);
-    console.log(' data.promptData.', data.model);
-
     try {
       const prompt = data.promptData.trim();
       const model = data.model.trim();
@@ -171,6 +168,60 @@ export class ProblemController {
       return {
         status: 400,
         message: '문제가 제대로 생성되지 않았습니다',
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // GPT OUTPUT결과값 return하기
+  @Post('generate/output')
+  async createP(@Body() data: any) {
+    try {
+      console.log('data입니다아앙', data);
+      let result = data.rawOutput;
+      // const prompt = data.promptData.trim();
+      // const model = data.model.trim();
+      // const result = await this.problemServiceRepository.generateProblems(
+      //   prompt,
+      //   model,
+      // );
+      const newResponse = result.replaceAll('#', '');
+      const [problems, answers] = newResponse.split('*****answer*****');
+      const problemDocs = `
+       \\documentclass[fleqn]{article}      
+       \\usepackage{amsmath}
+       \\usepackage{amssymb} 
+       \\usepackage{fontspec}
+       \\usepackage{kotex} % 한국어 지원  
+ 
+       \\begin{document}      
+       ${problems}      
+       \\end{document} 
+   `;
+      const answerDocs = `
+       \\documentclass[fleqn]{article}      
+       \\usepackage{amsmath}
+       \\usepackage{amssymb} 
+       \\usepackage{fontspec}
+       \\usepackage{kotex} % 한국어 지원  
+ 
+       \\begin{document}      
+       ${answers}      
+       \\end{document} 
+   `;
+      if (result) {
+        return {
+          status: 200,
+          message: 'AI OUTPUT이 생성 되었습니다',
+          result,
+          problemDocs,
+          answerDocs,
+        };
+      }
+      return {
+        status: 400,
+        message: 'AI OUTPUT이 제대로 생성되지 않았습니다',
       };
     } catch (error) {
       throw error;
