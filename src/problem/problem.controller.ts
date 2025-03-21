@@ -178,14 +178,7 @@ export class ProblemController {
   @Post('generate/output')
   async createP(@Body() data: any) {
     try {
-      console.log('data입니다아앙', data);
-      let result = data.rawOutput;
-      // const prompt = data.promptData.trim();
-      // const model = data.model.trim();
-      // const result = await this.problemServiceRepository.generateProblems(
-      //   prompt,
-      //   model,
-      // );
+      let result = data.rawOutput;  
       const newResponse = result.replaceAll('#', '');
       const [problems, answers] = newResponse.split('*****answer*****');
       const problemDocs = `
