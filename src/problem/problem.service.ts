@@ -48,8 +48,6 @@ export class ProblemService {
 
   // for deepseek
   async generateDeepSeekproblems(prompt: string, model: string) {
-    console.log('선택한 deepSeek Model', model);
-
     try {
       const response = await deepSeekOpenAI.chat.completions.create({
         model: model,

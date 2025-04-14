@@ -10,7 +10,6 @@ export class ProblemController {
     private readonly pdfServiceRepository: PdfService,
   ) {}
 
-  // GPT OUTPUT결과값 return하기
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
     try {
@@ -20,6 +19,7 @@ export class ProblemController {
         prompt,
         model,
       );
+      // console.log('result입니다아 ===>>>>', result);
       const newResponse = result.response.replaceAll('#', '');
       const [problems, answers] = newResponse.split('*****answer*****');
       const problemDocs = `
@@ -178,7 +178,7 @@ export class ProblemController {
   @Post('generate/output')
   async createP(@Body() data: any) {
     try {
-      let result = data.rawOutput;  
+      let result = data.rawOutput;
       const newResponse = result.replaceAll('#', '');
       const [problems, answers] = newResponse.split('*****answer*****');
       const problemDocs = `

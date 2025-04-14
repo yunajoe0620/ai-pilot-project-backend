@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 
 import { PdfModule } from './pdf/pdf.module';
 import { ProblemModule } from './problem/problem.module';
+import { MiddleSchoolModule } from './school/middleSchool.module';
 import { RecommendationsModule } from './survey/recommendations.module';
 
 // .aux파일은  LaTeX 문서에서 여러 번의 컴파일을 통해 필요한 정보를 저장하고, 이를 바탕으로 인용, 참조, 목차, 레퍼런스 등을 정확하게 처리
@@ -34,6 +35,7 @@ const dbConfig: TypeOrmModuleOptions = {
     ProblemModule,
     PdfModule,
     RecommendationsModule,
+    MiddleSchoolModule,
     // sevverd에서 static 파일을 보려면은 아래와 같은 경로로 간다.
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'files', 'latex'),
