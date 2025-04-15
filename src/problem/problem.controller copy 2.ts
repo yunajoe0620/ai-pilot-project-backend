@@ -25,32 +25,19 @@ export class ProblemController {
       let shortProblem = Number(shortAnswer);
       let latexShortAnswerProblems = '';
       let latexShortAnswers = '';
-      let latexMultipleChoieProblems = '';
-      let latexMultipleChoiceAnswers = '';
       // 주관식 문제가 있을때
       if (shortProblem > 0) {
-        console.log('주관식 문제다', shortProblem);
         let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제를 라텍스 형식으로 하나 만들어줘. 
-          문제와 정답을 아래와 같은 JavaScript 객체 형식으로 응답해줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘.
+        문제와 풀이를 아래와 같이 JSON 형식으로 담아줘. JSON key는 4개로 구정되어있다. problem, answer, ANSWER(오직정답만), EXPLAIN(정답해설)
+        수학 수식이 있을때 수식 앞뒤로 $표시를 넣어줘
           {
-             problem: 문제, 
-             answer: {
+            "problem": 문제, 
+            "answer": {
               ANSWER: 정답
               EXPLAIN: 풀이과정해설
             }
           }       
         `;
-        // let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제를 라텍스 형식으로 하나 만들어줘.
-        // 문제와 풀이를 아래와 같이 JSON 형식으로 담아줘. JSON key는 4개로 구정되어있다. problem, answer, ANSWER(오직정답만), EXPLAIN(정답해설)
-        // 수학 수식이 있을때 수식 앞뒤로 $표시를 넣어줘.  JSON parsing을 위해 잘 보내줘
-        //   {
-        //     "problem": 문제,
-        //     "answer": {
-        //       ANSWER: 정답
-        //       EXPLAIN: 풀이과정해설
-        //     }
-        //   }
-        // `;
         for (let i = 1; i <= shortProblem; i++) {
           const result = await this.problemServiceRepository.generateProblems(
             subjectPrompt,
@@ -62,66 +49,14 @@ export class ProblemController {
             .replace(/```json\n/, '')
             .replace(/```$/, '');
           const jsonParse = JSON.parse(jsonString);
-          latexShortAnswerProblems += `\\raggedright {\\Large \\textbf{${i}}}. \\\\\[1em] ${jsonParse.problem} \\\\\[2em]`;
-          latexShortAnswers += `\\raggedright {\\Large \\textbf{${i}}}. \\\\\[1em]
-          \\raggedright \\hspace{0.5em} [정답] ${jsonParse.answer.ANSWER} \\\\\
-          \\raggedright \\hspace{0.5em} [해설] ${jsonParse.answer.EXPLAIN} \\\\\[2em]           
+          latexShortAnswerProblems += `\\raggedright ${i}. ${jsonParse.problem} \\\\\[2em]`;
+          latexShortAnswers += `\\raggedright ${i}번의 답: ${jsonParse.answer.ANSWER} \\\\\[2em]
+          \\raggedright ${i}번의 해설: ${jsonParse.answer.EXPLAIN} \\\\\[2em]           
           `;
         }
       }
-      // 객관식 문제가 있을때
-      if (multipleChoiceProblem) {
-        console.log('객관식 문제다', multipleChoiceProblem);
-
-        let multiplceChoicePrompt = `${school} ${grade}${subject}${quizSubject}에 관한  객관식 문제를 만들어줘. 
-        문제와 풀이를 아래와 같이 JSON 형식으로 담아줘. JSON key는 4개로 구정되어있다. problem, answer, ANSWER(오직정답만), EXPLAIN(정답해설)
-        수학 수식이 있을때 수식 앞뒤로 $표시를 넣어줘. LaTeX 수식을 문자열로 표현할 때, JSON 파싱을 위해 \\ 대신 $ 로 사용해 줘
-          {
-            "problem": 문제, 
-            "answer": {
-              ANSWER: 정답
-              EXPLAIN: 풀이과정해설
-            }
-          }       
-        `;
-
-        for (let i = 1; i <= multipleChoiceProblem; i++) {
-          const result = await this.problemServiceRepository.generateProblems(
-            multiplceChoicePrompt,
-            'gpt-4o',
-          );
-
-          console.log('result2222222입니다', result);
-          const jsonString = result.response
-            .replace(/```json\n/, '')
-            .replace(/```$/, '');
-          const jsonParse = JSON.parse(jsonString);
-          latexMultipleChoieProblems += `\\raggedright ${i}. ${jsonParse.problem} \\\\\[2em]`;
-          latexMultipleChoiceAnswers += `\\raggedright ${i}번의 답: ${jsonParse.answer.ANSWER} \\\\\[1em]
-          \\raggedright ${i}번의 해설: ${jsonParse.answer.EXPLAIN} \\\\\[2em]
-          `;
-        }
-      }
-
-      // 주관식 처리
-      const shortAnswerformattedProblem = latexShortAnswerProblems.replace(
-        /[\r\n]+/g,
-        '',
-      );
-      const shortAnswerformattedAnswer = latexShortAnswers.replace(
-        /[\r\n]+/g,
-        '',
-      );
-
-      // 객관식 처리
-      const multipleChoiceformattedProblem = latexMultipleChoieProblems.replace(
-        /[\r\n]+/g,
-        '',
-      );
-      const multipleChoiceformattedAnswer = latexMultipleChoiceAnswers.replace(
-        /[\r\n]+/g,
-        '',
-      );
+      const formattedProblem = latexShortAnswerProblems.replace(/[\r\n]+/g, '');
+      const formattedAnswer = latexShortAnswers.replace(/[\r\n]+/g, '');
       const problemDocs = `
         \\documentclass[fleqn]{article}
         \\usepackage{amsmath}
@@ -130,8 +65,7 @@ export class ProblemController {
         \\usepackage{kotex} % 한국어 지원
 
         \\begin{document} 
-        ${shortAnswerformattedProblem}
-        ${multipleChoiceformattedProblem}
+        ${formattedProblem}
         \\end{document}
         `;
 
@@ -142,12 +76,11 @@ export class ProblemController {
       \\usepackage{fontspec}
       \\usepackage{kotex} % 한국어 지원
       \\begin{document}
-      ${shortAnswerformattedAnswer}
-      ${multipleChoiceformattedAnswer}
+      ${formattedAnswer}
       \\end{document}
       `;
 
-      if (problemDocs && answerDocs) {
+      if (formattedProblem && formattedAnswer) {
         return {
           status: 200,
           message: 'AI OUTPUT이 생성 되었습니다',
@@ -155,10 +88,6 @@ export class ProblemController {
           answerDocs,
         };
       }
-      return {
-        status: 400,
-        message: 'AI OUTPUT이 생성에 실패하였습니다.',
-      };
     } catch (error) {
       throw error;
     }

@@ -29,28 +29,17 @@ export class ProblemController {
       let latexMultipleChoiceAnswers = '';
       // 주관식 문제가 있을때
       if (shortProblem > 0) {
-        console.log('주관식 문제다', shortProblem);
-        let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제를 라텍스 형식으로 하나 만들어줘. 
-          문제와 정답을 아래와 같은 JavaScript 객체 형식으로 응답해줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘.
+        let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제를 라텍스 형식으로 하나 만들어줘.
+        문제와 풀이를 아래와 같이 JSON 형식으로 담아줘. JSON key는 4개로 구정되어있다. problem, answer, ANSWER(오직정답만), EXPLAIN(정답해설)
+        수학 수식이 있을때 수식 앞뒤로 $표시를 넣어줘.  JSON parsing을 위해 잘 보내줘
           {
-             problem: 문제, 
-             answer: {
+            "problem": 문제,
+            "answer": {
               ANSWER: 정답
               EXPLAIN: 풀이과정해설
             }
-          }       
+          }
         `;
-        // let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제를 라텍스 형식으로 하나 만들어줘.
-        // 문제와 풀이를 아래와 같이 JSON 형식으로 담아줘. JSON key는 4개로 구정되어있다. problem, answer, ANSWER(오직정답만), EXPLAIN(정답해설)
-        // 수학 수식이 있을때 수식 앞뒤로 $표시를 넣어줘.  JSON parsing을 위해 잘 보내줘
-        //   {
-        //     "problem": 문제,
-        //     "answer": {
-        //       ANSWER: 정답
-        //       EXPLAIN: 풀이과정해설
-        //     }
-        //   }
-        // `;
         for (let i = 1; i <= shortProblem; i++) {
           const result = await this.problemServiceRepository.generateProblems(
             subjectPrompt,
@@ -60,12 +49,13 @@ export class ProblemController {
           console.log('result입니다', result);
           const jsonString = result.response
             .replace(/```json\n/, '')
+            .replace(/```javascript\n/, '')
             .replace(/```$/, '');
           const jsonParse = JSON.parse(jsonString);
           latexShortAnswerProblems += `\\raggedright {\\Large \\textbf{${i}}}. \\\\\[1em] ${jsonParse.problem} \\\\\[2em]`;
           latexShortAnswers += `\\raggedright {\\Large \\textbf{${i}}}. \\\\\[1em]
           \\raggedright \\hspace{0.5em} [정답] ${jsonParse.answer.ANSWER} \\\\\
-          \\raggedright \\hspace{0.5em} [해설] ${jsonParse.answer.EXPLAIN} \\\\\[2em]           
+          \\raggedright \\hspace{0.5em} [해설] ${jsonParse.answer.EXPLAIN} \\\\\[2em]
           `;
         }
       }
