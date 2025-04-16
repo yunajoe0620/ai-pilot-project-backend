@@ -1,6 +1,8 @@
+import OpenAI from 'openai';
+const WolframAlphaAPI = require('wolfram-alpha-api');
+const waApi = WolframAlphaAPI(process.env.WOLFRAM_ALPHA_APP_KEY);
 const dotenv = require('dotenv');
 
-import OpenAI from 'openai';
 dotenv.config();
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -10,6 +12,14 @@ const deepSeekOpenAI = new OpenAI({
 });
 
 export class ProblemService {
+  async generateWolframProblems() {
+    try {
+      const response = await waApi.getFull('show me the function graphq');
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async generateProblems(prompt: string, model: string) {
     try {
       const response = await openai.chat.completions.create({
