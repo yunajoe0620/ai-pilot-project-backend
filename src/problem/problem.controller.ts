@@ -27,88 +27,73 @@ export class ProblemController {
       let latexShortAnswers = '';
       let latexMultipleChoieProblems = '';
       let latexMultipleChoiceAnswers = '';
+      console.log('데이터입니다아', data);
       // 주관식 문제가 있을때
       if (shortProblem > 0) {
-        console.log('주관식 문제다', shortProblem);
-        let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제를 라텍스 형식으로 하나 만들어줘. 
-          문제와 정답을 아래와 같은 JavaScript 객체 형식으로 응답해줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘.
-          {
-             problem: 문제, 
-             answer: {
-              ANSWER: 정답
-              EXPLAIN: 풀이과정해설
+        let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 라텍스 형식으로 만들어줘. 
+        나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘.
+        answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘.줄내림은 하지 말아줘
+        아래와 같은 형태일꺼야
+        quiz: [
+           {
+            problem: 문제(문제앞에는 문제 번호를 쓰지 말아줘), 
+            answer: {
+              result: 답(오직 답만)
+              explain: 문제 풀이과정
             }
-          }       
-        `;
-        // let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제를 라텍스 형식으로 하나 만들어줘.
-        // 문제와 풀이를 아래와 같이 JSON 형식으로 담아줘. JSON key는 4개로 구정되어있다. problem, answer, ANSWER(오직정답만), EXPLAIN(정답해설)
-        // 수학 수식이 있을때 수식 앞뒤로 $표시를 넣어줘.  JSON parsing을 위해 잘 보내줘
-        //   {
-        //     "problem": 문제,
-        //     "answer": {
-        //       ANSWER: 정답
-        //       EXPLAIN: 풀이과정해설
-        //     }
-        //   }
-        // `;
-        for (let i = 1; i <= shortProblem; i++) {
-          const result = await this.problemServiceRepository.generateProblems(
-            subjectPrompt,
-            'gpt-4o',
-          );
+          }
+        ]
+      `;
 
-          console.log('result입니다', result);
-          const jsonString = result.response
-            .replace(/```json\n/, '')
-            .replace(/```$/, '');
-          const jsonParse = JSON.parse(jsonString);
-          latexShortAnswerProblems += `\\raggedright {\\Large \\textbf{${i}}}. \\\\\[1em] ${jsonParse.problem} \\\\\[2em]`;
-          latexShortAnswers += `\\raggedright {\\Large \\textbf{${i}}}. \\\\\[1em]
-          \\raggedright \\hspace{0.5em} [정답] ${jsonParse.answer.ANSWER} \\\\\
-          \\raggedright \\hspace{0.5em} [해설] ${jsonParse.answer.EXPLAIN} \\\\\[2em]           
-          `;
-        }
+        const result = await this.problemServiceRepository.generateProblems(
+          subjectPrompt,
+          'gpt-4o',
+        );
+        console.log('GPT API 결과입니다아', result);
+        const jsonParse = JSON.parse(result.response);
+        console.log('jsonParse', jsonParse);
+
+        jsonParse.quiz.forEach((data, i) => {
+          latexShortAnswerProblems += `{\\Large \\textbf{${i + 1}}}. \\\\[1em] ${data.problem} \\\\[2em]`;
+          latexShortAnswers += `{\\Large \\textbf{${i + 1}}}.\n\\\\[1em]\n\\hspace{0.5em} [정답] ${data.answer.result}\n\\\\[2em]\n\\hspace{0.5em} [해설] ${data.answer.explain}\n\\\\[2em]`;
+        });
       }
+
       // 객관식 문제가 있을때
-      if (multipleChoiceProblem) {
-        console.log('객관식 문제다', multipleChoiceProblem);
+      // if (multipleChoiceProblem) {
+      //   console.log('객관식 문제다', multipleChoiceProblem);
 
-        let multiplceChoicePrompt = `${school} ${grade}${subject}${quizSubject}에 관한  객관식 문제를 만들어줘. 
-        문제와 풀이를 아래와 같이 JSON 형식으로 담아줘. JSON key는 4개로 구정되어있다. problem, answer, ANSWER(오직정답만), EXPLAIN(정답해설)
-        수학 수식이 있을때 수식 앞뒤로 $표시를 넣어줘. LaTeX 수식을 문자열로 표현할 때, JSON 파싱을 위해 \\ 대신 $ 로 사용해 줘
-          {
-            "problem": 문제, 
-            "answer": {
-              ANSWER: 정답
-              EXPLAIN: 풀이과정해설
-            }
-          }       
-        `;
+      //   let multiplceChoicePrompt = `${school} ${grade}${subject}${quizSubject}에 관한  객관식 문제를 만들어줘.
+      //   문제와 풀이를 아래와 같이 JSON 형식으로 담아줘. JSON key는 4개로 구정되어있다. problem, answer, ANSWER(오직정답만), EXPLAIN(정답해설)
+      //   수학 수식이 있을때 수식 앞뒤로 $표시를 넣어줘. LaTeX 수식을 문자열로 표현할 때, JSON 파싱을 위해 \\ 대신 $ 로 사용해 줘
+      //     {
+      //       "problem": 문제,
+      //       "answer": {
+      //         ANSWER: 정답
+      //         EXPLAIN: 풀이과정해설
+      //       }
+      //     }
+      //   `;
 
-        for (let i = 1; i <= multipleChoiceProblem; i++) {
-          const result = await this.problemServiceRepository.generateProblems(
-            multiplceChoicePrompt,
-            'gpt-4o',
-          );
+      //   for (let i = 1; i <= multipleChoiceProblem; i++) {
+      //     const result = await this.problemServiceRepository.generateProblems(
+      //       multiplceChoicePrompt,
+      //       'gpt-4o',
+      //     );
 
-          console.log('result2222222입니다', result);
-          const jsonString = result.response
-            .replace(/```json\n/, '')
-            .replace(/```$/, '');
-          const jsonParse = JSON.parse(jsonString);
-          latexMultipleChoieProblems += `\\raggedright ${i}. ${jsonParse.problem} \\\\\[2em]`;
-          latexMultipleChoiceAnswers += `\\raggedright ${i}번의 답: ${jsonParse.answer.ANSWER} \\\\\[1em]
-          \\raggedright ${i}번의 해설: ${jsonParse.answer.EXPLAIN} \\\\\[2em]
-          `;
-        }
-      }
+      //     const jsonString = result.response
+      //       .replace(/```json\n/, '')
+      //       .replace(/```$/, '');
+      //     const jsonParse = JSON.parse(jsonString);
+      //     latexMultipleChoieProblems += `\\raggedright ${i}. ${jsonParse.problem} \\\\\[2em]`;
+      //     latexMultipleChoiceAnswers += `\\raggedright ${i}번의 답: ${jsonParse.answer.ANSWER} \\\\\[1em]
+      //     \\raggedright ${i}번의 해설: ${jsonParse.answer.EXPLAIN} \\\\\[2em]
+      //     `;
+      //   }
+      // }
 
       // 주관식 처리
       const shortAnswerformattedProblem = latexShortAnswerProblems.replace(
-        /[\r\n]+/g,
-        '',
-      );
-      const shortAnswerformattedAnswer = latexShortAnswers.replace(
         /[\r\n]+/g,
         '',
       );
@@ -122,30 +107,9 @@ export class ProblemController {
         /[\r\n]+/g,
         '',
       );
-      const problemDocs = `
-        \\documentclass[fleqn]{article}
-        \\usepackage{amsmath}
-        \\usepackage{amssymb}
-        \\usepackage{fontspec}
-        \\usepackage{kotex} % 한국어 지원
+      const problemDocs = `\\documentclass[fleqn]{article}\n\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage{fontspec}\n\\usepackage{kotex} % 한국어 지원\n\\begin{document}\n\\noindent\n${shortAnswerformattedProblem}${multipleChoiceformattedProblem}\n\\end{document}`;
 
-        \\begin{document} 
-        ${shortAnswerformattedProblem}
-        ${multipleChoiceformattedProblem}
-        \\end{document}
-        `;
-
-      const answerDocs = `
-      \\documentclass[fleqn]{article}
-      \\usepackage{amsmath}
-      \\usepackage{amssymb}
-      \\usepackage{fontspec}
-      \\usepackage{kotex} % 한국어 지원
-      \\begin{document}
-      ${shortAnswerformattedAnswer}
-      ${multipleChoiceformattedAnswer}
-      \\end{document}
-      `;
+      const answerDocs = `\\documentclass[fleqn]{article}\n\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage{fontspec}\n\\usepackage{kotex} % 한국어 지원\n\\begin{document}\n\\noindent\n${latexShortAnswers}${multipleChoiceformattedAnswer}\n\\end{document}`;
 
       if (problemDocs && answerDocs) {
         return {
@@ -166,6 +130,7 @@ export class ProblemController {
   @Post('generate')
   async createProblems(@Body() data: CreateProblems) {
     try {
+      console.log('pdf/generate', data);
       const prompt = data.promptData.trim();
       const model = data.model.trim();
       const result = await this.problemServiceRepository.generateProblems(
@@ -272,36 +237,12 @@ export class ProblemController {
   @Post('generate/pdf')
   async createPdfs(@Body() data: any) {
     console.log('데이터어어', data.data);
-    const newResponse = data.data.replaceAll('#', '');
-    const [problems, answers] = newResponse.split('*****answer*****');
-    console.log('problems', problems);
-    const problemdocs = `
-    \\documentclass[fleqn]{article}      
-    \\usepackage{amsmath}
-    \\usepackage{amssymb} 
-    \\usepackage{fontspec}
-    \\usepackage{kotex} % 한국어 지원  
-
-    \\begin{document}      
-    ${problems}      
-    \\end{document} 
-`;
-    const answerDocs = `
-   \\documentclass[fleqn]{article}      
-    \\usepackage{amsmath}
-    \\usepackage{amssymb} 
-    \\usepackage{fontspec}
-    \\usepackage{kotex} % 한국어 지원  
-
-    \\begin{document}      
-    ${answers}      
-    \\end{document} 
-`;
+    const { problemDocs, answerDocs } = data;
 
     try {
       const problemPdfresult = await this.pdfServiceRepository.createTextFile(
         'problemPdf',
-        problemdocs,
+        problemDocs,
       );
 
       const answerPdfresult = await this.pdfServiceRepository.createTextFile(

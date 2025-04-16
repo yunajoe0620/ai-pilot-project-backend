@@ -36,6 +36,9 @@ export class ProblemService {
             ],
           },
         ],
+        response_format: {
+          type: 'json_object',
+        },
         temperature: 0.7,
       });
       return {
