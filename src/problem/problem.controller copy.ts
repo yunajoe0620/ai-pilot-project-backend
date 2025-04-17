@@ -63,7 +63,9 @@ export class ProblemController {
           subjectPrompt,
           'gpt-4o-mini',
         );
+        console.log('GPT 주관식 결과입니다아', result);
         const jsonParse = JSON.parse(result.response);
+        console.log('jsonParse', jsonParse);
 
         jsonParse.quiz.forEach((data, i) => {
           latexShortAnswerProblems += `{\\Large \\textbf{${i + 1}}}. \\\\[1em] ${data.problem} \\\\[2em]`;
@@ -96,17 +98,31 @@ export class ProblemController {
         );
 
         const jsonParse = JSON.parse(result.response);
+        console.log('jsonPArse', jsonParse);
+        jsonParse.quiz.forEach((item, index) => {
+          const {
+            problem: { options },
+          } = item;
+          options.forEach((option) => {
+            console.log('options', option);
+            const key = Object.keys(option)[0];
+            latexMultipleChoieOptions += `${key}:${option[key]}\\\\[1em]`;
+            console.log('latex', latexMultipleChoieOptions);
+            // latexMultipleChoieOptions = '';
+          });
+        });
 
         jsonParse.quiz.forEach((data, i) => {
           const {
             problem: { options },
           } = data;
           options.forEach((option) => {
+            console.log('options', option);
             const key = Object.keys(option)[0];
-            const value = option[key];
-            latexMultipleChoieOptions += `\\hspace{0.5em}(${key}) ${value} \\\\[1em]`;
+            latexMultipleChoieOptions += `${key}:${option[key]}\\\\[1em]`;
+            console.log('latex', latexMultipleChoieOptions);
+            // latexMultipleChoieOptions = '';
           });
-
           latexMultipleChoieProblems += `{\\Large \\textbf{${i + 1}}}. \\\\[1em] ${data.problem.problem} \\\\[1em] ${latexMultipleChoieOptions} \\\\[2em]`;
           latexMultipleChoieOptions = '';
           latexMultipleChoiceAnswers += `{\\Large \\textbf{${i + 1}}}.\n\\\\[1em]\n\\hspace{0.5em} [정답] ${data.answer.result}\n\\\\[2em]\n\\hspace{0.5em} [해설] ${data.answer.explain}\n\\\\[2em]`;
