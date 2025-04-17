@@ -26,6 +26,7 @@ export class ProblemController {
   }
   @Post('test')
   async createTestProblem(@Body() data: any) {
+    console.log('data', data);
     try {
       const {
         school,
@@ -34,9 +35,18 @@ export class ProblemController {
         quizSubject,
         multipleChoice,
         shortAnswer,
+        highLevelProblem,
+        mediumLevelProblem,
+        lowLevelProblem,
       } = data;
+      let mixedProblemArray = [];
       let multipleChoiceProblem = Number(multipleChoice);
       let shortProblem = Number(shortAnswer);
+      let totalProblem = multipleChoiceProblem + shortProblem;
+      let highLevel = Number(highLevelProblem);
+      let mediumLevel = Number(mediumLevelProblem);
+      let lowLevel = Number(lowLevelProblem);
+
       let latexShortAnswerProblems = '';
       let latexShortAnswers = '';
       let latexMultipleChoieProblems = '';
@@ -45,11 +55,14 @@ export class ProblemController {
       // 주관식 문제가 있을때
       if (shortProblem > 0) {
         let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 라텍스 형식으로 만들어줘. 
-        나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘.
+        나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘. 문제에 대한 난이도는 level에 넣어줘
+        난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.
+
         answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘.줄내림은 하지 말아줘
-        아래와 같은 형태일꺼야
+        아래와 같은 형태일꺼야. 
         quiz: [
            {
+            level: 문제난이도(상, 중, 하 로만 표시)
             problem: 문제(문제앞에는 문제 번호를 쓰지 말아줘), 
             answer: {
               result: 답(오직 답만)
@@ -61,12 +74,13 @@ export class ProblemController {
 
         const result = await this.problemServiceRepository.generateProblems(
           subjectPrompt,
-          'gpt-4o-mini',
+          'gpt-4o',
         );
         const jsonParse = JSON.parse(result.response);
+        console.log(' jsonParse', jsonParse);
 
         jsonParse.quiz.forEach((data, i) => {
-          latexShortAnswerProblems += `{\\Large \\textbf{${i + 1}}}. \\\\[1em] ${data.problem} \\\\[2em]`;
+          latexShortAnswerProblems += `{\\Large \\textbf{${i + 1}}}.{\\Large \\textbf 난이도: (${data.level})} \\\\[1em] ${data.problem} \\\\[2em]`;
           latexShortAnswers += `{\\Large \\textbf{${i + 1}}}.\n\\\\[1em]\n\\hspace{0.5em} [정답] ${data.answer.result}\n\\\\[2em]\n\\hspace{0.5em} [해설] ${data.answer.explain}\n\\\\[2em]`;
         });
       }
@@ -74,11 +88,14 @@ export class ProblemController {
       if (multipleChoiceProblem) {
         let multipleChoicePrompt = `${school} ${grade} ${subject} ${quizSubject}에 관한 객관식 문제 ${multipleChoiceProblem}개를 라텍스 형식으로 만들어줘. 
         나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘.
-        problem.problem 에는 문제를, problem.options안에는 선택지들을 넣어줘
+        problem.problem 에는 문제를, problem.options안에는 선택지들을 넣어줘.문제에 대한 난이도는 level에 넣어줘
+        난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.
+
         answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘.줄내림은 하지 말아줘
         아래와 같은 형태일꺼야
         quiz: [
            {
+            level: 문제난이도(상, 중, 하 로만 표시)  
             problem:  {
               problem: 문제(문제앞에는 문제 번호를 쓰지 말아줘), 
               options: [{a: 선택사항1}, {b: 선택사항2}, {c: 선택사항3}, {d:선택사항4}, {e:선택사항5}]
@@ -92,7 +109,7 @@ export class ProblemController {
       `;
         const result = await this.problemServiceRepository.generateProblems(
           multipleChoicePrompt,
-          'gpt-4o-mini',
+          'gpt-4o',
         );
 
         const jsonParse = JSON.parse(result.response);
@@ -106,18 +123,17 @@ export class ProblemController {
             const value = option[key];
             latexMultipleChoieOptions += `\\hspace{0.5em}(${key}) ${value} \\\\[1em]`;
           });
-
-          latexMultipleChoieProblems += `{\\Large \\textbf{${i + 1}}}. \\\\[1em] ${data.problem.problem} \\\\[1em] ${latexMultipleChoieOptions} \\\\[2em]`;
+          latexMultipleChoieProblems += `{\\Large \\textbf{${i + 1}}}.{\\Large \\textbf 난이도: (${data.level})} \\\\[1em] ${data.problem.problem} \\\\[1em] ${latexMultipleChoieOptions} \\\\[2em]`;
           latexMultipleChoieOptions = '';
           latexMultipleChoiceAnswers += `{\\Large \\textbf{${i + 1}}}.\n\\\\[1em]\n\\hspace{0.5em} [정답] ${data.answer.result}\n\\\\[2em]\n\\hspace{0.5em} [해설] ${data.answer.explain}\n\\\\[2em]`;
         });
       }
 
       // 주관식 처리
-      const shortAnswerformattedProblem = latexShortAnswerProblems.replace(
-        /[\r\n]+/g,
-        '',
-      );
+      const shortAnswerformattedProblem = latexShortAnswerProblems
+        .replaceAll(/[\r\n]+/g, '')
+        .replaceAll('/\beq\b/g', '=')
+        .replaceAll('/\bext\b/g', '\\text');
 
       // 객관식 처리
       const multipleChoiceformattedProblem = latexMultipleChoieProblems.replace(
