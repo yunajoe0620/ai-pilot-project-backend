@@ -1,4 +1,9 @@
+import * as fs from 'fs';
+import * as moment from 'moment';
+import * as child from 'node:child_process';
 import OpenAI from 'openai';
+import * as path from 'path';
+
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -19,7 +24,6 @@ export class ProblemService {
         input: 'plot y = 2x + 3',
         output: 'json',
       });
-      // console.log('response', response);
       const pods = await response.pods;
       const plotPod = pods.find((pod) =>
         pod.title.toLowerCase().includes('plot'),
@@ -50,6 +54,74 @@ export class ProblemService {
   //     throw error;
   //   }
   // }
+
+  // string을 markdown파일로 만드는 함수
+  async generateMarkDownFile(markDownString: string, fileName: string) {
+    console.log('markDownString', markDownString, 'fileName', fileName);
+    try {
+      const millisecond = moment().valueOf();
+      // const timeStampWithFilename = `${fileName}${millisecond}`;
+      const timeStampWithFilename = `${fileName}.md`;
+      const filePath = path.resolve(
+        'pandocs',
+        'markdown',
+        timeStampWithFilename,
+      );
+      // 둘다 동기 함슈..
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, markDownString, 'utf-8');
+      const file = fs.readFileSync(filePath);
+      if (typeof file == 'object') {
+        return {
+          status: 200,
+        };
+      }
+      return {
+        status: 400,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+  // markdown파일을 읽고 tex 파일로 변환하는 펑션
+  async convertMarkDownToLatex(filename: string, outputFileName: string) {
+    return new Promise((resolve, reject) => {
+      const filePath = path.resolve('pandocs', 'markdown');
+      const markdownPath = path.resolve(filePath, `${filename}.md`);
+      const markdownContent = fs.readFileSync(markdownPath, 'utf-8');
+      if (markdownContent) {
+        const millisecond = moment().valueOf();
+        const timeStampWithFilename = `${outputFileName}${millisecond}`;
+        // const command = `cd pandocs & cd markdown & dir & pandoc ${filename}.md -o cd .. & ${timeStampWithFilename}.tex`;
+        const command = `cd pandocs & cd markdown & dir & pandoc ${filename}.md -o ${timeStampWithFilename}.tex`;
+
+        child.exec(command, (e, stdout) => {
+          const latexFilePath = path.resolve(
+            'pandocs',
+            'markdown',
+            `${timeStampWithFilename}.tex`,
+          );
+          if (fs.existsSync(latexFilePath)) {
+            resolve({
+              message: 'latex파일에 성공하였습니다',
+              filename: timeStampWithFilename,
+            });
+          } else {
+            reject({
+              message: 'latex파일에 실패하였습니다.',
+              filename: null,
+            });
+          }
+        });
+      } else {
+        reject({
+          message: 'markdown 파일이 존재하지 않거나 비어 있습니다.',
+          filename: null,
+        });
+      }
+    });
+  }
+
   async generateProblems(prompt: string, model: string) {
     try {
       const response = await openai.chat.completions.create({
