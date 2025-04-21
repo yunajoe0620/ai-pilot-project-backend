@@ -38,6 +38,7 @@ export class ProblemController {
         mediumLevelProblem,
         lowLevelProblem,
       } = data;
+      console.log('test API를 눌렀습니다.');
       let multipleChoiceProblem = Number(multipleChoice);
       let shortProblem = Number(shortAnswer);
       let totalProblem = multipleChoiceProblem + shortProblem;
@@ -55,6 +56,8 @@ export class ProblemController {
         let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 보내줘. 
         나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘. 문제에 대한 난이도는 level에 넣어줘
         난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
+        난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제
+
         answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘
         아래와 같은 형태일꺼야. 
         quiz: [
@@ -71,8 +74,9 @@ export class ProblemController {
 
         const result = await this.problemServiceRepository.generateProblems(
           subjectPrompt,
-          'gpt-4o',
+          'gpt-4o-mini',
         );
+
         const jsonParse = JSON.parse(result.response);
 
         jsonParse.quiz.forEach((data, i) => {
@@ -86,11 +90,32 @@ export class ProblemController {
             latexShortAnswerProblems,
             'problemMarkdown',
           );
+
         if (response.status === 200) {
-          await this.problemServiceRepository.convertMarkDownToLatex(
-            'problemMarkdown',
-            'problemLatex',
-          );
+          // markdown file에서 latex 파일로 변환하는 method. 성곡곡
+          const result1: any =
+            await this.problemServiceRepository.convertMarkDownToLatex(
+              'problemMarkdown',
+              'problem',
+            );
+          const { status, filename } = result1;
+
+          // latex로 잘 생성이 되었다면은
+          if (status === 200) {
+            const problemPdfresult: any =
+              await this.pdfServiceRepository.createTextFileTwo(filename);
+            console.log('pdfResult', problemPdfresult);
+            return {
+              problemfilename: problemPdfresult.filename,
+              status: problemPdfresult.status,
+              message: problemPdfresult.message,
+            };
+          }
+        } else {
+          return {
+            status: response.status,
+            message: response.message,
+          };
         }
       }
 

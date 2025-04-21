@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+import { join } from 'node:path';
 import { PdfModule } from './pdf/pdf.module';
 import { ProblemModule } from './problem/problem.module';
 import { MiddleSchoolModule } from './school/middleSchool.module';
@@ -37,9 +37,13 @@ const dbConfig: TypeOrmModuleOptions = {
     RecommendationsModule,
     MiddleSchoolModule,
     // sevverd에서 static 파일을 보려면은 아래와 같은 경로로 간다.
+    // ServeStaticModule.forRoot({
+    //   rootPath: join(__dirname, '..', 'files', 'latex'),
+    //   serveRoot: '/pdf', // pdf/pdf파일이름 이렇게 지정이 된다.
+    // }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'files', 'latex'),
-      serveRoot: '/pdf', // pdf/pdf파일이름 이렇게 지정이 된다.
+      rootPath: join(__dirname, '..', 'files', 'pdf'),
+      serveRoot: '/files/pdf', // ✅ 이게 브라우저 접근 경로
     }),
   ],
   controllers: [AppController],

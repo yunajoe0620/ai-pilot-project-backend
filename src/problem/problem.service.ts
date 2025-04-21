@@ -59,8 +59,6 @@ export class ProblemService {
   async generateMarkDownFile(markDownString: string, fileName: string) {
     console.log('markDownString', markDownString, 'fileName', fileName);
     try {
-      const millisecond = moment().valueOf();
-      // const timeStampWithFilename = `${fileName}${millisecond}`;
       const timeStampWithFilename = `${fileName}.md`;
       const filePath = path.resolve(
         'pandocs',
@@ -74,16 +72,20 @@ export class ProblemService {
       if (typeof file == 'object') {
         return {
           status: 200,
+          message: '마크다운 변환에 성공하였습니다',
         };
       }
       return {
         status: 400,
+        message: '마크다운 변환에 실패하였습니다.',
       };
     } catch (error) {
       throw error;
     }
   }
   // markdown파일을 읽고 tex 파일로 변환하는 펑션
+  // filename은 problemMarkdown과 answerMarkDown2가지일뿐이다.
+  // outpufilename problem과 output2가지일뿐이다.
   async convertMarkDownToLatex(filename: string, outputFileName: string) {
     return new Promise((resolve, reject) => {
       const filePath = path.resolve('pandocs', 'markdown');
@@ -91,11 +93,13 @@ export class ProblemService {
       const markdownContent = fs.readFileSync(markdownPath, 'utf-8');
       if (markdownContent) {
         const millisecond = moment().valueOf();
+        // problem1231313123(와 같은 형태태)
         const timeStampWithFilename = `${outputFileName}${millisecond}`;
-        // const command = `cd pandocs & cd markdown & dir & pandoc ${filename}.md -o cd .. & ${timeStampWithFilename}.tex`;
-        const command = `cd pandocs & cd markdown & dir & pandoc ${filename}.md -o ${timeStampWithFilename}.tex`;
+
+        const command = `cd pandocs & cd markdown & dir & pandoc ${filename}.md --template=template.tex -o ${timeStampWithFilename}.tex`;
 
         child.exec(command, (e, stdout) => {
+          console.log('라텍스 파일에 변환 성공', e, stdout);
           const latexFilePath = path.resolve(
             'pandocs',
             'markdown',
@@ -105,11 +109,13 @@ export class ProblemService {
             resolve({
               message: 'latex파일에 성공하였습니다',
               filename: timeStampWithFilename,
+              status: 200,
             });
           } else {
             reject({
               message: 'latex파일에 실패하였습니다.',
               filename: null,
+              status: 400,
             });
           }
         });
@@ -117,6 +123,7 @@ export class ProblemService {
         reject({
           message: 'markdown 파일이 존재하지 않거나 비어 있습니다.',
           filename: null,
+          status: 400,
         });
       }
     });
