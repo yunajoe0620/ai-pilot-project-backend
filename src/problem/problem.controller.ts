@@ -61,8 +61,9 @@ export class ProblemController {
 
         jsonParse.forEach((data, i) => {
           const formattedProblem = data.problem.replace(/\n/g, '');
+          const formattedExplain = data.answer.explain.replace(/\n/g, '');
           latexShortAnswerProblems += `\\raggedright\n\\Large \\textbf{${i + 1}.난이도(${data.level})}\n\n\\normalsize ${formattedProblem}\n\n\\vspace{1.5em}\n\n`;
-          latexShortAnswers += `\\raggedright${i + 1}.\n [정답] ${data.answer.result}\n\n ${data.answer.explain}\n\n\\vspace{1.5em}`;
+          latexShortAnswers += `\\raggedright\n\\noindent ${i + 1}. [정답] ${data.answer.result}\n\n${formattedExplain}\n\n\\vspace{1.5em}\n\n`;
         });
 
         const problemResponse =
