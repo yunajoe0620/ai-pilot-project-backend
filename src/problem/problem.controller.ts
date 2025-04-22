@@ -135,6 +135,32 @@ export class ProblemController {
           };
         }
       }
+
+      // 객관식
+
+      if (multipleChoiceProblem) {
+        let multipleChoicePrompt = `${school} ${grade}${subject}${quizSubject}에 관한 객관식 문제 ${multipleChoiceProblem}개를 보내줘. 
+        나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘. 문제에 대한 난이도는 level에 넣어줘
+        난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
+        난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
+        answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘. 줄내림은 하지 말아줘
+        아래와 같은 JSON schema로 보내줘. 한국말로해줘
+        Quiz = {
+          level: string,  // 문제 난이도 (상, 중, 하)
+          problem: string,  // 문제 내용 (문제 번호는 제외)
+          answer: {
+            result: string,  // 정답
+            explain: string  // 풀이 과정
+          }
+        }
+
+       Return: Array<Quiz>    
+      `;
+        const result =
+          await this.problemServiceRepository.generateGeminiMultipleChoiceProblems(
+            multipleChoicePrompt,
+          );
+      }
     } catch (error) {
       throw error;
     }
