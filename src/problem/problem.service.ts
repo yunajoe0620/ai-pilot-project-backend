@@ -1,3 +1,5 @@
+import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as moment from 'moment';
 import * as child from 'node:child_process';
@@ -6,7 +8,11 @@ import * as path from 'path';
 
 const dotenv = require('dotenv');
 dotenv.config();
-
+const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+const model = genAI.getGenerativeModel({
+  model: 'gemini-pro', // or 'gemini-pro'
+});
 const WolframAlphaAPI = require('@wolfram-alpha/wolfram-alpha-api');
 
 const waApi = WolframAlphaAPI(process.env.WOLFRAM_ALPHA_APP_KEY);
@@ -35,29 +41,13 @@ export class ProblemService {
           imageUrl,
         };
       }
-
-      // const result = pods.find((pod) => pod.title === 'Result');
-      // const { position, error, subpods } = result;
-      // const [{ title, img, plaintext }] = subpods;
-      // console.log('title, img, plantext', title, img, plaintext);
     } catch (error) {
       throw error;
     }
   }
-  // async generateWolframProblems(prompt: string) {
-  //   try {
-  //     const url = `https://api.wolframalpha.com/v2/query?input=draw+the+function+graph&format=image,plaintext,sound,html&output=JSON&appid=${process.env.WOLFRAM_ALPHA_APP_KEY}`;
-  //     const response = await fetch(url);
-  //     const jsonData = await response.json();
-  //     console.log('response', jsonData);
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
 
   // string을 markdown파일로 만드는 함수
   async generateMarkDownFile(markDownString: string, fileName: string) {
-    console.log('markDownString', markDownString, 'fileName', fileName);
     try {
       const timeStampWithFilename = `${fileName}.md`;
       const filePath = path.resolve(
@@ -65,7 +55,6 @@ export class ProblemService {
         'markdown',
         timeStampWithFilename,
       );
-      // 둘다 동기 함슈..
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, markDownString, 'utf-8');
       const file = fs.readFileSync(filePath);
@@ -86,20 +75,20 @@ export class ProblemService {
   // markdown파일을 읽고 tex 파일로 변환하는 펑션
   // filename은 problemMarkdown과 answerMarkDown2가지일뿐이다.
   // outpufilename problem과 output2가지일뿐이다.
-  async convertMarkDownToLatex(filename: string, outputFileName: string) {
+  async convertMarkDownToLatex(
+    filename: string,
+    outputFileName: string,
+  ): Promise<{ message: string; filename: string; status: number }> {
     return new Promise((resolve, reject) => {
       const filePath = path.resolve('pandocs', 'markdown');
       const markdownPath = path.resolve(filePath, `${filename}.md`);
       const markdownContent = fs.readFileSync(markdownPath, 'utf-8');
       if (markdownContent) {
         const millisecond = moment().valueOf();
-        // problem1231313123(와 같은 형태태)
         const timeStampWithFilename = `${outputFileName}${millisecond}`;
-
         const command = `cd pandocs & cd markdown & dir & pandoc ${filename}.md --template=template.tex -o ${timeStampWithFilename}.tex`;
 
         child.exec(command, (e, stdout) => {
-          console.log('라텍스 파일에 변환 성공', e, stdout);
           const latexFilePath = path.resolve(
             'pandocs',
             'markdown',
@@ -129,6 +118,7 @@ export class ProblemService {
     });
   }
 
+  // gpt
   async generateProblems(prompt: string, model: string) {
     try {
       const response = await openai.chat.completions.create({
@@ -180,7 +170,7 @@ export class ProblemService {
               {
                 type: 'text',
                 text: `
-                    You are a math tutor that answers in korean                  
+                    You are a math tutor that answers in korean
                   `,
               },
             ],
@@ -201,6 +191,53 @@ export class ProblemService {
       };
     } catch (error) {
       throw error;
+    }
+  }
+  // gemini
+  async generateGeminiProblems(prompt: string) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro-preview-03-25',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                level: {
+                  type: Type.STRING,
+                  enum: ['상', '중', '하'],
+                  description: '문제 난이도 (상, 중, 하)',
+                },
+                problem: {
+                  type: Type.STRING,
+                  description: '문제 내용 (문제 번호를 포함하지 않음)',
+                },
+                answer: {
+                  type: Type.OBJECT,
+                  properties: {
+                    result: {
+                      type: Type.STRING,
+                      description: '답 (오직 답만)',
+                    },
+                    explain: {
+                      type: Type.STRING,
+                      description: '문제 풀이 과정',
+                    },
+                  },
+                  required: ['result', 'explain'],
+                },
+              },
+              required: ['level', 'problem', 'answer'],
+            },
+          },
+        },
+      });
+      return response.candidates[0].content.parts[0].text;
+    } catch (error) {
+      console.error('Error generating Gemini problems:', error);
     }
   }
 }

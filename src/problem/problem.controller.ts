@@ -10,6 +10,135 @@ export class ProblemController {
     private readonly pdfServiceRepository: PdfService,
   ) {}
 
+  @Post('generate/gemini')
+  async createGeminiProblem(@Body() data: any) {
+    try {
+      const {
+        school,
+        grade,
+        subject,
+        quizSubject,
+        multipleChoice,
+        shortAnswer,
+        highLevelProblem,
+        mediumLevelProblem,
+        lowLevelProblem,
+      } = data;
+
+      let multipleChoiceProblem = Number(multipleChoice);
+      let shortProblem = Number(shortAnswer);
+      let totalProblem = multipleChoiceProblem + shortProblem;
+      let highLevel = Number(highLevelProblem);
+      let mediumLevel = Number(mediumLevelProblem);
+      let lowLevel = Number(lowLevelProblem);
+      let latexShortAnswerProblems = '';
+      let latexShortAnswers = '';
+
+      if (shortProblem > 0) {
+        let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 보내줘. 
+        나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘. 문제에 대한 난이도는 level에 넣어줘
+        난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
+        난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
+        answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘. 줄내림은 하지 말아줘
+        아래와 같은 JSON schema로 보내줘. 한국말로해줘
+        Quiz = {
+          level: string,  // 문제 난이도 (상, 중, 하)
+          problem: string,  // 문제 내용 (문제 번호는 제외)
+          answer: {
+            result: string,  // 정답
+            explain: string  // 풀이 과정
+          }
+        }
+
+       Return: Array<Quiz>    
+      `;
+        const result =
+          await this.problemServiceRepository.generateGeminiProblems(
+            subjectPrompt,
+          );
+
+        const jsonParse = JSON.parse(result);
+
+        jsonParse.forEach((data, i) => {
+          const formattedProblem = data.problem.replace(/\n/g, '');
+          latexShortAnswerProblems += `\\raggedright\n\\Large \\textbf{${i + 1}.난이도(${data.level})}\n\n\\normalsize ${formattedProblem}\n\n\\vspace{1.5em}\n\n`;
+          latexShortAnswers += `\\raggedright${i + 1}.\n [정답] ${data.answer.result}\n\n ${data.answer.explain}\n\n\\vspace{1.5em}`;
+        });
+
+        const problemResponse =
+          await this.problemServiceRepository.generateMarkDownFile(
+            latexShortAnswerProblems,
+            'problemMarkdown',
+          );
+
+        const answerResponse =
+          await this.problemServiceRepository.generateMarkDownFile(
+            latexShortAnswers,
+            'answerMarkdown',
+          );
+
+        if (problemResponse.status === 200 && answerResponse.status === 200) {
+          const result = await Promise.all([
+            this.problemServiceRepository.convertMarkDownToLatex(
+              'problemMarkdown',
+              'prolbem',
+            ),
+            this.problemServiceRepository.convertMarkDownToLatex(
+              'answerMarkdown',
+              'answer',
+            ),
+          ]);
+
+          // markdown => latex성공여부
+          const [problemLatexResponse, answerLatexResponse] = result;
+          if (
+            problemLatexResponse.status === 200 &&
+            answerLatexResponse.status === 200
+          ) {
+            const result = await Promise.all([
+              this.pdfServiceRepository.createPdfFile(
+                problemLatexResponse.filename,
+              ),
+              this.pdfServiceRepository.createPdfFile(
+                answerLatexResponse.filename,
+              ),
+            ]);
+
+            const [problemPdfResponse, answerPdfResponse] = result;
+            if (
+              problemPdfResponse.status === 200 &&
+              answerPdfResponse.status === 200
+            ) {
+              return {
+                message: 'pdf파일에 성공하였습니다',
+                status: 200,
+                problemfilename: problemPdfResponse.filename,
+                answerfilename: answerPdfResponse.filename,
+              };
+            }
+            return {
+              message: 'pdf파일에 실패하였습니다',
+              status: 400,
+              problemfilename: null,
+              answerfilename: null,
+            };
+          }
+          return {
+            status: 400,
+            message: 'latex 파일 생성에 실패하였습니다',
+          };
+        } else {
+          return {
+            status: 400,
+            message: 'markdown 파일 생성에 실패하였습니다',
+          };
+        }
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
   @Post('wolfram')
   async createWolframProblem(@Body() data: any) {
     const { school, grade, subject, quizSubject, multipleChoice, shortAnswer } =
@@ -38,14 +167,12 @@ export class ProblemController {
         mediumLevelProblem,
         lowLevelProblem,
       } = data;
-      console.log('test API를 눌렀습니다.');
       let multipleChoiceProblem = Number(multipleChoice);
       let shortProblem = Number(shortAnswer);
       let totalProblem = multipleChoiceProblem + shortProblem;
       let highLevel = Number(highLevelProblem);
       let mediumLevel = Number(mediumLevelProblem);
       let lowLevel = Number(lowLevelProblem);
-
       let latexShortAnswerProblems = '';
       let latexShortAnswers = '';
       let latexMultipleChoieProblems = '';
@@ -103,7 +230,7 @@ export class ProblemController {
           // latex로 잘 생성이 되었다면은
           if (status === 200) {
             const problemPdfresult: any =
-              await this.pdfServiceRepository.createTextFileTwo(filename);
+              await this.pdfServiceRepository.createPdfFile(filename);
             console.log('pdfResult', problemPdfresult);
             return {
               problemfilename: problemPdfresult.filename,
@@ -165,7 +292,6 @@ export class ProblemController {
         prompt,
         model,
       );
-      console.log('result입니당아', result);
       const newResponse = result.response.replaceAll('#', '');
       const [problems, answers] = newResponse.split('*****answer*****');
       const problemDocs = `
@@ -223,26 +349,26 @@ export class ProblemController {
       const [problems, answers] = newResponse.split('*****answer*****');
 
       const problemDocs = `
-      \\documentclass[fleqn]{article}      
+      \\documentclass[fleqn]{article}
       \\usepackage{amsmath}
-      \\usepackage{amssymb} 
+      \\usepackage{amssymb}
       \\usepackage{fontspec}
-      \\usepackage{kotex} % 한국어 지원  
-  
-      \\begin{document}      
-      ${problems}      
-      \\end{document} 
+      \\usepackage{kotex} % 한국어 지원
+
+      \\begin{document}
+      ${problems}
+      \\end{document}
   `;
       const answerDocs = `
-     \\documentclass[fleqn]{article}      
+     \\documentclass[fleqn]{article}
       \\usepackage{amsmath}
-      \\usepackage{amssymb} 
+      \\usepackage{amssymb}
       \\usepackage{fontspec}
-      \\usepackage{kotex} % 한국어 지원  
-  
-      \\begin{document}      
-      ${answers}      
-      \\end{document} 
+      \\usepackage{kotex} % 한국어 지원
+
+      \\begin{document}
+      ${answers}
+      \\end{document}
   `;
       if (result.response) {
         return {
