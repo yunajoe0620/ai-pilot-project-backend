@@ -1,5 +1,4 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as moment from 'moment';
 import * as child from 'node:child_process';
@@ -9,10 +8,7 @@ import * as path from 'path';
 const dotenv = require('dotenv');
 dotenv.config();
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI });
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-const model = genAI.getGenerativeModel({
-  model: 'gemini-pro', // or 'gemini-pro'
-});
+
 const WolframAlphaAPI = require('@wolfram-alpha/wolfram-alpha-api');
 
 const waApi = WolframAlphaAPI(process.env.WOLFRAM_ALPHA_APP_KEY);
@@ -50,11 +46,7 @@ export class ProblemService {
   async generateMarkDownFile(markDownString: string, fileName: string) {
     try {
       const timeStampWithFilename = `${fileName}.md`;
-      const filePath = path.resolve(
-        'pandocs',
-        'markdown',
-        timeStampWithFilename,
-      );
+      const filePath = path.resolve('pandocs', timeStampWithFilename);
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, markDownString, 'utf-8');
       const file = fs.readFileSync(filePath);
@@ -80,18 +72,17 @@ export class ProblemService {
     outputFileName: string,
   ): Promise<{ message: string; filename: string; status: number }> {
     return new Promise((resolve, reject) => {
-      const filePath = path.resolve('pandocs', 'markdown');
+      const filePath = path.resolve('pandocs');
       const markdownPath = path.resolve(filePath, `${filename}.md`);
       const markdownContent = fs.readFileSync(markdownPath, 'utf-8');
       if (markdownContent) {
         const millisecond = moment().valueOf();
         const timeStampWithFilename = `${outputFileName}${millisecond}`;
-        const command = `cd pandocs & cd markdown & dir & pandoc ${filename}.md --template=template.tex -o ${timeStampWithFilename}.tex`;
+        const command = `cd pandocs & dir & pandoc ${filename}.md --template=template.tex -o ${timeStampWithFilename}.tex`;
 
         child.exec(command, (e, stdout) => {
           const latexFilePath = path.resolve(
             'pandocs',
-            'markdown',
             `${timeStampWithFilename}.tex`,
           );
           if (fs.existsSync(latexFilePath)) {

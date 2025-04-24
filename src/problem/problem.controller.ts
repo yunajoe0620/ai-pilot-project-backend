@@ -1,6 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { CreateProblems } from 'src/dto/problem';
-import { HtmlService } from 'src/html/html.service';
 import { PdfService } from 'src/pdf/pdf.service';
 import { ProblemService } from './problem.service';
 const fs = require('fs');
@@ -10,7 +9,6 @@ export class ProblemController {
   constructor(
     private readonly problemServiceRepository: ProblemService,
     private readonly pdfServiceRepository: PdfService,
-    private readonly htmlServiceRepository: HtmlService,
   ) {}
 
   @Post('generate/gemini')
@@ -37,7 +35,6 @@ export class ProblemController {
 
       // 주관식만 있고 객관식은 없을때
       if (shortProblem > 0 && multipleChoiceProblem === 0) {
-        console.log('나는야 주관식');
         let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 보내줘. 
         난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
         난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
@@ -109,9 +106,6 @@ export class ProblemController {
 
         const { problemHtml, answerHtml } = result;
 
-        // console.log('problemHtml', problemHtml);
-        // console.log(' answerHtml', answerHtml);
-
         const cleanedproblemHtml = problemHtml
           .replace(/^```html\s*/, '')
           .replace(/```$/, '');
@@ -132,26 +126,6 @@ export class ProblemController {
           cleanedproblemHtml: null,
           cleanedanswerHtml: null,
         };
-
-        // const response = await this.htmlServiceRepository.createHTMLFile(
-        //   cleanedproblemHtml,
-        //   'problem.html',
-        // );
-        // if (response.status === 200) {
-        //   return {
-        //     status: 200,
-        //     problemhtmlText: response,
-
-        //   };
-        // }
-
-        // fs.writeFile('mixed.html', cleanredText, 'utf8', (err) => {
-        //   if (err) {
-        //     console.log('error입니다');
-        //   } else {
-        //     console.log('✅ 파일 저장 완료: manual.html');
-        //   }
-        // });
       }
 
       // 객관식만 있고 주관식을 있을 때
@@ -269,23 +243,6 @@ export class ProblemController {
             </body> 
         </html>    
       `;
-
-        // const result =
-        //   await this.problemServiceRepository.generateGeminiProblemsWithHtmlFormat(
-        //     mixedPrompt,
-        //   );
-
-        // const cleanredText = result
-        //   .replace(/^```html\s*/, '')
-        //   .replace(/```$/, '');
-
-        // fs.writeFile('mixed.html', cleanredText, 'utf8', (err) => {
-        //   if (err) {
-        //   } else {
-        //     console.log('✅ 파일 저장 완료: manual.html');
-        //   }
-        // });
-        // console.log('객관식 + 주관식 문제', result);
       }
     } catch (error) {
       throw error;
@@ -520,7 +477,6 @@ export class ProblemController {
     }
   }
 
-  // GPT OUTPUT결과값 return하기
   @Post('generate/output')
   async createP(@Body() data: any) {
     try {
