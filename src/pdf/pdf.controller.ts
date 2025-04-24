@@ -1,5 +1,4 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
-import * as path from 'path';
+import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
 import { Docs } from 'src/dto/problem';
 import { PdfService } from './pdf.service';
 
@@ -43,9 +42,19 @@ export class PdfController {
   }
 
   @Get('download')
-  async downloadPDF(@Res() res: Response) {
-    const pdfFilePath = path.resolve('pandocs', 'markdown', 'problem.pdf');
-    const answerPdfFilePath = path.resolve('pandocs', 'markdown', 'answer.pdf');
+  async downloadPDF(@Query('type') type: string, @Res() res: Response) {
+    let fileName: string;
+    let htmlName: string;
+    if (type === 'problem') {
+      fileName = 'problem.pdf';
+      htmlName = 'problem.html';
+    } else if (type === 'answer') {
+      fileName = 'answer.pdf';
+      htmlName = 'answer.html';
+    } else {
+      return res.status(400).send('Invalid type parameter');
+    }
+
     try {
       const result = await Promise.all([
         this.pdfServiceRepository.downloadPdfFile(
@@ -57,7 +66,8 @@ export class PdfController {
 
       const [problemResult, answerResult] = result;
       if (problemResult.status === 200 && answerResult.status === 200) {
-        this.pdfServiceRepository.streamPdfFile(res, pdfFilePath);
+        // this.pdfServiceRepository.streamPdfFile(res, problemPdfFilePath);
+        // this.pdfServiceRepository.streamPdfFile(res, answerPdfFilePath);
       }
     } catch (error) {
       throw error;

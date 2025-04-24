@@ -20,7 +20,6 @@ export class PdfService {
       const pandocCommand = `cd pandocs & pandoc ${filename} -o ${outputFileName} --pdf-engine=lualatex --template=template.tex --lua-filter=filter.lua`;
 
       child.exec(pandocCommand, (e, stdout) => {
-        console.log('pdf로 만들기');
         const pdfFilePath = path.resolve('pandocs', outputFileName);
 
         if (fs.existsSync(pdfFilePath)) {
