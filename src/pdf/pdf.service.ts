@@ -5,6 +5,41 @@ import * as child from 'node:child_process';
 import * as path from 'path';
 @Injectable()
 export class PdfService {
+  streamPdfFile(res, pdfFilePath: string) {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="result.pdf"');
+    const fileStream = fs.createReadStream(pdfFilePath);
+    fileStream.pipe(res);
+  }
+
+  downloadPdfFile(
+    filename: string,
+    outputFileName: string,
+  ): Promise<{ status: number; message: string; filename: string }> {
+    return new Promise((resolve, reject) => {
+      const pandocCommand = `cd pandocs & cd markdown & pandoc ${filename} -o ${outputFileName} --pdf-engine=lualatex --template=template.tex --lua-filter=filter.lua`;
+
+      child.exec(pandocCommand, (e, stdout) => {
+        console.log('pdf로 만들기');
+        const pdfFilePath = path.resolve('pandocs', 'markdown', outputFileName);
+
+        if (fs.existsSync(pdfFilePath)) {
+          resolve({
+            message: 'pdf파일이 생성하였습니다',
+            filename: outputFileName,
+            status: 200,
+          });
+        } else {
+          reject({
+            message: 'pdf파일 생성에 실패하였습니다',
+            filename: null,
+            status: 400,
+          });
+        }
+      });
+    });
+  }
+
   createPdfFile(
     filename: string,
   ): Promise<{ message: string; filename: string; status: number }> {

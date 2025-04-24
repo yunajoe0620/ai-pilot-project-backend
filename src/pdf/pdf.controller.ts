@@ -1,4 +1,5 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import * as path from 'path';
 import { Docs } from 'src/dto/problem';
 import { PdfService } from './pdf.service';
 
@@ -23,7 +24,6 @@ export class PdfController {
       );
       // 최종결과값
       const isFinished = await Promise.all([problemPdfresult, answerPdfresult]);
-      console.log('isFinished', isFinished);
 
       if (isFinished.length === 2) {
         return {
@@ -37,6 +37,28 @@ export class PdfController {
         status: 400,
         message: '문제가 제대로 생성되지 않았습니다',
       };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Get('download')
+  async downloadPDF(@Res() res: Response) {
+    const pdfFilePath = path.resolve('pandocs', 'markdown', 'problem.pdf');
+    const answerPdfFilePath = path.resolve('pandocs', 'markdown', 'answer.pdf');
+    try {
+      const result = await Promise.all([
+        this.pdfServiceRepository.downloadPdfFile(
+          'problem.html',
+          'problem.pdf',
+        ),
+        this.pdfServiceRepository.downloadPdfFile('answer.html', 'answer.pdf'),
+      ]);
+
+      const [problemResult, answerResult] = result;
+      if (problemResult.status === 200 && answerResult.status === 200) {
+        this.pdfServiceRepository.streamPdfFile(res, pdfFilePath);
+      }
     } catch (error) {
       throw error;
     }

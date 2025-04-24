@@ -1,13 +1,16 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { CreateProblems } from 'src/dto/problem';
+import { HtmlService } from 'src/html/html.service';
 import { PdfService } from 'src/pdf/pdf.service';
 import { ProblemService } from './problem.service';
+const fs = require('fs');
 
 @Controller('problem')
 export class ProblemController {
   constructor(
     private readonly problemServiceRepository: ProblemService,
     private readonly pdfServiceRepository: PdfService,
+    private readonly htmlServiceRepository: HtmlService,
   ) {}
 
   @Post('generate/gemini')
@@ -31,135 +34,258 @@ export class ProblemController {
       let highLevel = Number(highLevelProblem);
       let mediumLevel = Number(mediumLevelProblem);
       let lowLevel = Number(lowLevelProblem);
-      let latexShortAnswerProblems = '';
-      let latexShortAnswers = '';
 
-      if (shortProblem > 0) {
+      // 주관식만 있고 객관식은 없을때
+      if (shortProblem > 0 && multipleChoiceProblem === 0) {
+        console.log('나는야 주관식');
         let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 보내줘. 
-        나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘. 문제에 대한 난이도는 level에 넣어줘
         난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
         난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
-        answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘. 줄내림은 하지 말아줘
-        아래와 같은 JSON schema로 보내줘. 한국말로해줘
-        Quiz = {
-          level: string,  // 문제 난이도 (상, 중, 하)
-          problem: string,  // 문제 내용 (문제 번호는 제외)
-          answer: {
-            result: string,  // 정답
-            explain: string  // 풀이 과정
-          }
-        }
 
-       Return: Array<Quiz>    
+         1. 문제 생성 시 필수 사항:  
+        - 각 문항의 수식은 MathML로 작성한다.  
+        - MathML 생성 시, 다음 오류를 반드시 피할 것:  
+          ❌ <mtable>을 <mo>, <mfenced>와 함께 사용 금지  
+          ❌ <math> 태그에 xmlns 속성을 중복 선언 금지 (한 번만 맨 처음 선언)  
+          ❌ <mrow> 안에 block-level 요소(<mtable>)만 있는 구조 금지  
+        - 모든 문항 생성 후, 각 문항의 표현이 올바른지, 계산 과정 및 답이 논리적으로 타당한지 자체적으로 점검하여 문제가 반드시 풀릴 수 있도록 검수한다.  
+        - 각 문항을 HTML 파일에 넣을 때는 반드시 아래의 템플릿을 지켜서 MathJax 호환성을 유지하도록 한다.
+        - 문제와 정답을 다른 HTML에 넣는다
+
+
+         2. 문제 생성 시 유의 사항:  
+          - MathML 수식 표기 오류 최소화 
+
+          - 논리적으로 일관되고 풀 수 있는 문제 생성
+
+          - 문제 난이도 명확성 증가
+
+          - HTML 구조 오류 제거
+
+          - 문제 출력 형식의 일관성 확보
+       
+         3. HTML  문제 출력 템플릿  
+        <!DOCTYPE html>  
+          <html lang="ko">  
+          <head>  
+            <meta charset="UTF-8">  
+            <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+            <title>${school} ${grade}${subject}${quizSubject} 문제 </title>  
+          </head>  
+          <body>  
+            <div class="question">  
+              <h3>[문제 번호]. [난이도 표시: 쉬움/보통/어려움] [유형: 객관식/서술형]</h3>  
+              <p>여기에 문제를 작성(MathML 코드 삽입)</p>  
+              </div>  
+            </body> 
+        </html> 
+        
+        4. HTML 정답 출력 템플릿
+        <!DOCTYPE html>  
+          <html lang="ko">  
+          <head>  
+            <meta charset="UTF-8">  
+            <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+            <title>${school} ${grade}${subject}${quizSubject} 정답 </title>  
+          </head>  
+          <body>  
+            <div class="answer">  
+              <h3>[문제 번호]. 정답</h3> 
+              <p>해설(MathML 코드 삽입)</p>  
+              </div>  
+            </body> 
+        </html> 
+        4. **최종 출력 형식:**
+        다음과 같은 JSON 형식으로 구조화하여 리턴해줘.
+        {
+          "problemHtml": "[문제 HTML 내용]",
+          "answerHtml": "[정답 HTML 내용]"
+        }
       `;
         const result =
-          await this.problemServiceRepository.generateGeminiProblems(
+          await this.problemServiceRepository.generateGeminiProblemsWithHtmlFormat(
             subjectPrompt,
           );
 
-        const jsonParse = JSON.parse(result);
+        const { problemHtml, answerHtml } = result;
 
-        jsonParse.forEach((data, i) => {
-          const formattedProblem = data.problem.replace(/\n/g, '');
-          const formattedExplain = data.answer.explain.replace(/\n/g, '');
-          latexShortAnswerProblems += `\\raggedright\n\\Large \\textbf{${i + 1}.난이도(${data.level})}\n\n\\normalsize ${formattedProblem}\n\n\\vspace{1.5em}\n\n`;
-          latexShortAnswers += `\\raggedright\n\\noindent ${i + 1}. [정답] ${data.answer.result}\n\n${formattedExplain}\n\n\\vspace{1.5em}\n\n`;
-        });
+        // console.log('problemHtml', problemHtml);
+        // console.log(' answerHtml', answerHtml);
 
-        const problemResponse =
-          await this.problemServiceRepository.generateMarkDownFile(
-            latexShortAnswerProblems,
-            'problemMarkdown',
-          );
+        const cleanedproblemHtml = problemHtml
+          .replace(/^```html\s*/, '')
+          .replace(/```$/, '');
 
-        const answerResponse =
-          await this.problemServiceRepository.generateMarkDownFile(
-            latexShortAnswers,
-            'answerMarkdown',
-          );
+        const cleanedanswerHtml = answerHtml
+          .replace(/^```html\s*/, '')
+          .replace(/```$/, '');
 
-        if (problemResponse.status === 200 && answerResponse.status === 200) {
-          const result = await Promise.all([
-            this.problemServiceRepository.convertMarkDownToLatex(
-              'problemMarkdown',
-              'prolbem',
-            ),
-            this.problemServiceRepository.convertMarkDownToLatex(
-              'answerMarkdown',
-              'answer',
-            ),
-          ]);
-
-          // markdown => latex성공여부
-          const [problemLatexResponse, answerLatexResponse] = result;
-          if (
-            problemLatexResponse.status === 200 &&
-            answerLatexResponse.status === 200
-          ) {
-            const result = await Promise.all([
-              this.pdfServiceRepository.createPdfFile(
-                problemLatexResponse.filename,
-              ),
-              this.pdfServiceRepository.createPdfFile(
-                answerLatexResponse.filename,
-              ),
-            ]);
-
-            const [problemPdfResponse, answerPdfResponse] = result;
-            if (
-              problemPdfResponse.status === 200 &&
-              answerPdfResponse.status === 200
-            ) {
-              return {
-                message: 'pdf파일에 성공하였습니다',
-                status: 200,
-                problemfilename: problemPdfResponse.filename,
-                answerfilename: answerPdfResponse.filename,
-              };
-            }
-            return {
-              message: 'pdf파일에 실패하였습니다',
-              status: 400,
-              problemfilename: null,
-              answerfilename: null,
-            };
-          }
+        if (problemHtml && answerHtml) {
           return {
-            status: 400,
-            message: 'latex 파일 생성에 실패하였습니다',
-          };
-        } else {
-          return {
-            status: 400,
-            message: 'markdown 파일 생성에 실패하였습니다',
+            status: 200,
+            cleanedproblemHtml,
+            cleanedanswerHtml,
           };
         }
+        return {
+          status: 400,
+          cleanedproblemHtml: null,
+          cleanedanswerHtml: null,
+        };
+
+        // const response = await this.htmlServiceRepository.createHTMLFile(
+        //   cleanedproblemHtml,
+        //   'problem.html',
+        // );
+        // if (response.status === 200) {
+        //   return {
+        //     status: 200,
+        //     problemhtmlText: response,
+
+        //   };
+        // }
+
+        // fs.writeFile('mixed.html', cleanredText, 'utf8', (err) => {
+        //   if (err) {
+        //     console.log('error입니다');
+        //   } else {
+        //     console.log('✅ 파일 저장 완료: manual.html');
+        //   }
+        // });
       }
 
-      // 객관식
-
-      if (multipleChoiceProblem) {
+      // 객관식만 있고 주관식을 있을 때
+      else if (multipleChoiceProblem > 0 && shortProblem === 0) {
         let multipleChoicePrompt = `${school} ${grade}${subject}${quizSubject}에 관한 객관식 문제 ${multipleChoiceProblem}개를 보내줘. 
-        나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘. 문제에 대한 난이도는 level에 넣어줘
         난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
         난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
-        answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘. 줄내림은 하지 말아줘
-        아래와 같은 JSON schema로 보내줘. 한국말로해줘
-        Quiz = {
-          level: string,  // 문제 난이도 (상, 중, 하)
-          problem: string,  // 문제 내용 (문제 번호는 제외)
-          answer: {
-            result: string,  // 정답
-            explain: string  // 풀이 과정
-          }
-        }
 
-       Return: Array<Quiz>    
+         1. 문제 생성 시 필수 사항:
+
+        - 각 문항의 수식은 MathML로 작성한다.  
+        - MathML 생성 시, 다음 오류를 반드시 피할 것:  
+          ❌ <mtable>을 <mo>, <mfenced>와 함께 사용 금지  
+          ❌ <math> 태그에 xmlns 속성을 중복 선언 금지 (한 번만 맨 처음 선언)  
+          ❌ <mrow> 안에 block-level 요소(<mtable>)만 있는 구조 금지  
+        - 모든 문항 생성 후, 각 문항의 표현이 올바른지, 계산 과정 및 답이 논리적으로 타당한지 자체적으로 점검하여 문제가 반드시 풀릴 수 있도록 검수한다.  
+        - 각 문항을 HTML 파일에 넣을 때는 반드시 아래의 템플릿을 지켜서 MathJax 호환성을 유지하도록 한다.
+
+         2. 문제 생성 시 유의 사항:  
+          - MathML 수식 표기 오류 최소화 
+
+          - 논리적으로 일관되고 풀 수 있는 문제 생성
+
+          - 문제 난이도 명확성 증가
+
+          - HTML 구조 오류 제거
+
+          - 문제 출력 형식의 일관성 확보
+       
+         3.  HTML 출력 템플릿  
+        <!DOCTYPE html>  
+          <html lang="ko">  
+          <head>  
+            <meta charset="UTF-8">  
+            <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+            <title>${school} ${grade}${subject}${quizSubject} 문제 </title>  
+          </head>  
+          <body>  
+            <div class="question">  
+              <h3>[문제 번호]. [난이도 표시: 쉬움/보통/어려움] [유형: 객관식]</h3>
+
+              <p>여기에 문제를 작성(MathML 코드 삽입)</p>   
+              <ol type="①">
+
+                <li>보기1(MathML)</li>
+
+                <li>보기2(MathML)</li>
+
+                <li>보기3(MathML)</li>
+
+                <li>보기4(MathML)</li>
+
+                <li>보기5(MathML)</li>
+
+                </ol>  
+                </div>  
+            </body> 
+        </html>    
       `;
-        const result =
-          await this.problemServiceRepository.generateGeminiMultipleChoiceProblems(
-            multipleChoicePrompt,
-          );
+      }
+      // 주관식이랑 객관식 둘다 있을 때
+      else if (shortProblem > 0 && multipleChoiceProblem > 0) {
+        let mixedPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 객관식 문제 ${multipleChoiceProblem}개와 주관식 문제 ${shortProblem}를 랜덤으로 섞어서 보내줘. 
+        난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
+        난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
+
+         1. 문제 생성 시 필수 사항:
+
+        - 각 문항의 수식은 MathML로 작성한다.  
+        - MathML 생성 시, 다음 오류를 반드시 피할 것:  
+          ❌ <mtable>을 <mo>, <mfenced>와 함께 사용 금지  
+          ❌ <math> 태그에 xmlns 속성을 중복 선언 금지 (한 번만 맨 처음 선언)  
+          ❌ <mrow> 안에 block-level 요소(<mtable>)만 있는 구조 금지  
+        - 모든 문항 생성 후, 각 문항의 표현이 올바른지, 계산 과정 및 답이 논리적으로 타당한지 자체적으로 점검하여 문제가 반드시 풀릴 수 있도록 검수한다.  
+        - 각 문항을 HTML 파일에 넣을 때는 반드시 아래의 템플릿을 지켜서 MathJax 호환성을 유지하도록 한다.
+
+         2. 문제 생성 시 유의 사항:  
+          - MathML 수식 표기 오류 최소화 
+
+          - 논리적으로 일관되고 풀 수 있는 문제 생성
+
+          - 문제 난이도 명확성 증가
+
+          - HTML 구조 오류 제거
+
+          - 문제 출력 형식의 일관성 확보
+       
+         3.  HTML 출력 템플릿  
+        <!DOCTYPE html>  
+          <html lang="ko">  
+          <head>  
+            <meta charset="UTF-8">  
+            <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+            <title>${school} ${grade}${subject}${quizSubject} 문제 </title>  
+          </head>  
+          <body>  
+            <div class="question">  
+              <h3>[문제 번호]. [난이도 표시: 쉬움/보통/어려움] [유형: 객관식/주관식]</h3>    
+              <p>여기에 문제를 작성(MathML 코드 삽입)</p>   
+
+              <!-- 아래는 객관식일때 추가하는 부분 -->            
+              <ol type="①">  
+                <li>보기1(MathML)</li>
+
+                <li>보기2(MathML)</li>
+
+                <li>보기3(MathML)</li>
+
+                <li>보기4(MathML)</li>
+
+                <li>보기5(MathML)</li>
+
+                </ol>  
+              </div>  
+            </body> 
+        </html>    
+      `;
+
+        // const result =
+        //   await this.problemServiceRepository.generateGeminiProblemsWithHtmlFormat(
+        //     mixedPrompt,
+        //   );
+
+        // const cleanredText = result
+        //   .replace(/^```html\s*/, '')
+        //   .replace(/```$/, '');
+
+        // fs.writeFile('mixed.html', cleanredText, 'utf8', (err) => {
+        //   if (err) {
+        //   } else {
+        //     console.log('✅ 파일 저장 완료: manual.html');
+        //   }
+        // });
+        // console.log('객관식 + 주관식 문제', result);
       }
     } catch (error) {
       throw error;
@@ -342,60 +468,6 @@ export class ProblemController {
       \\begin{document}      
       ${answers}      
       \\end{document} 
-  `;
-      if (result.response) {
-        return {
-          status: 200,
-          message: 'AI OUTPUT이 생성 되었습니다',
-          result,
-          problemDocs,
-          answerDocs,
-        };
-      }
-      return {
-        status: 400,
-        message: 'AI OUTPUT이 제대로 생성되지 않았습니다',
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // for deek seek
-  @Post('generate/deekseek')
-  async createDeeakSeekProblems(@Body() data: CreateProblems) {
-    try {
-      const prompt = data.promptData.trim();
-      const model = data.model.trim();
-      const result =
-        await this.problemServiceRepository.generateDeepSeekproblems(
-          prompt,
-          model,
-        );
-      const newResponse = result.response.replaceAll('#', '');
-      const [problems, answers] = newResponse.split('*****answer*****');
-
-      const problemDocs = `
-      \\documentclass[fleqn]{article}
-      \\usepackage{amsmath}
-      \\usepackage{amssymb}
-      \\usepackage{fontspec}
-      \\usepackage{kotex} % 한국어 지원
-
-      \\begin{document}
-      ${problems}
-      \\end{document}
-  `;
-      const answerDocs = `
-     \\documentclass[fleqn]{article}
-      \\usepackage{amsmath}
-      \\usepackage{amssymb}
-      \\usepackage{fontspec}
-      \\usepackage{kotex} % 한국어 지원
-
-      \\begin{document}
-      ${answers}
-      \\end{document}
   `;
       if (result.response) {
         return {

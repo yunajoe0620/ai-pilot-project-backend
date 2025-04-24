@@ -240,9 +240,8 @@ export class ProblemService {
       console.error('Error generating Gemini problems:', error);
     }
   }
-
-  // 객관식일때
-  async generateGeminiMultipleChoiceProblems(prompt: string) {
+  // gemini
+  async generateGeminiProblemsWithHtmlFormat(prompt: string) {
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-pro-preview-03-25',
@@ -250,48 +249,39 @@ export class ProblemService {
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                level: {
-                  type: Type.STRING,
-                  enum: ['상', '중', '하'],
-                  description: '문제 난이도 (상, 중, 하)',
-                },
-                problem: {
-                  type: Type.OBJECT,
-                  properties: {
-                    problem: {
-                      type: Type.STRING,
-                      description: '문제',
-                    },
-                    optionArray: {
-                      type: Type.ARRAY,
-                    },
-                  },
-                },
-                answer: {
-                  type: Type.OBJECT,
-                  properties: {
-                    result: {
-                      type: Type.STRING,
-                      description: '답 (오직 답만)',
-                    },
-                    explain: {
-                      type: Type.STRING,
-                      description: '문제 풀이 과정',
-                    },
-                  },
-                  required: ['result', 'explain'],
-                },
+            type: Type.OBJECT,
+            properties: {
+              problemHtml: {
+                type: Type.STRING,
+                description: '문제 HTML 형식',
               },
-              required: ['level', 'problem', 'answer'],
+              answerHtml: {
+                type: Type.STRING,
+                description: '답안 HTML 형식',
+              },
             },
+            required: ['problemHtml', 'answerHtml'],
           },
         },
       });
-      return response.candidates[0].content.parts[0].text;
+      if (
+        !response.candidates ||
+        response.candidates.length === 0 ||
+        !response.candidates[0].content ||
+        !response.candidates[0].content.parts ||
+        response.candidates[0].content.parts.length === 0
+      ) {
+        return { problemHtml: null, answerHtml: null };
+      }
+
+      const responseText = response.candidates[0].content.parts[0].text;
+      try {
+        const parsedResponse = JSON.parse(responseText);
+        return {
+          problemHtml: parsedResponse.problemHtml,
+          answerHtml: parsedResponse.answerHtml,
+        };
+      } catch (error) {}
     } catch (error) {
       console.error('Error generating Gemini problems:', error);
     }
