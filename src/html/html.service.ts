@@ -9,7 +9,7 @@ export class HtmlService {
     outputFileName: string,
   ): Promise<{ message: string; filename: string; status: number }> {
     return new Promise((resolve, reject) => {
-      const outputDir = path.resolve('pandocs', 'markdown');
+      const outputDir = path.resolve('pandocs');
 
       const fullPath = path.join(outputDir, outputFileName);
       fs.mkdirSync(outputDir, { recursive: true });

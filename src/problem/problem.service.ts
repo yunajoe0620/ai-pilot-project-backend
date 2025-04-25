@@ -1,4 +1,9 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import {
+  createPartFromUri,
+  createUserContent,
+  GoogleGenAI,
+  Type,
+} from '@google/genai';
 import * as fs from 'fs';
 import * as moment from 'moment';
 import * as child from 'node:child_process';
@@ -20,23 +25,45 @@ const deepSeekOpenAI = new OpenAI({
 });
 
 export class ProblemService {
+  // 비슷한 문제 유형 콜 하는 API
+  async generateSimilarProblems(prompt: string) {
+    const filePath = path.resolve('files', 'test.png');
+    const myfile = await ai.files.upload({
+      file: filePath,
+      config: { mimeType: 'image/png', name: '' },
+    });
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-pro-preview-03-25',
+      contents: createUserContent([
+        createPartFromUri(myfile.uri, myfile.mimeType),
+        prompt,
+      ]),
+    });
+    console.log('response', response.candidates[0].content);
+  }
+
+  // 그림문제를 콜 하는 API
   async generateWolframProblems(prompt: string) {
     try {
       const response = await waApi.getFull({
-        input: 'plot y = 2x + 3',
+        input: `plot ${prompt}`,
+        // input: 'plot sin(x)',
         output: 'json',
       });
-      const pods = await response.pods;
-      const plotPod = pods.find((pod) =>
-        pod.title.toLowerCase().includes('plot'),
-      );
-      const imageUrl = plotPod?.subpods[0]?.img?.src;
-      if (imageUrl) {
+      console.log('response', response);
+      console.log('response', response.pods[0].subpods);
+      if (response.inputstring) {
         return {
           status: 200,
-          imageUrl,
+          process: response.inputstring,
         };
       }
+
+      return {
+        status: 400,
+        process: null,
+      };
     } catch (error) {
       throw error;
     }
@@ -273,6 +300,44 @@ export class ProblemService {
           answerHtml: parsedResponse.answerHtml,
         };
       } catch (error) {}
+    } catch (error) {
+      console.error('Error generating Gemini problems:', error);
+    }
+  }
+
+  // gemini
+
+  async generateGeminiProblemsWithImages(prompt: string) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro-preview-03-25',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              mathFormula: {
+                type: Type.STRING,
+                description: '수학공식만을 적는다다',
+              },
+            },
+            required: ['mathFormula'],
+          },
+        },
+      });
+      if (
+        !response.candidates ||
+        response.candidates.length === 0 ||
+        !response.candidates[0].content ||
+        !response.candidates[0].content.parts ||
+        response.candidates[0].content.parts.length === 0
+      ) {
+        return { mathFormula: null };
+      }
+      return {
+        mathFormula: response.candidates[0].content.parts[0].text,
+      };
     } catch (error) {
       console.error('Error generating Gemini problems:', error);
     }

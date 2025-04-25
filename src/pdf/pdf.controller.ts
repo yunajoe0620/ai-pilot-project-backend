@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
+import { Response } from 'express';
+import * as path from 'path';
 import { Docs } from 'src/dto/problem';
 import { PdfService } from './pdf.service';
 
@@ -21,7 +23,6 @@ export class PdfController {
         'answerPdf',
         answerDocs,
       );
-      // 최종결과값
       const isFinished = await Promise.all([problemPdfresult, answerPdfresult]);
 
       if (isFinished.length === 2) {
@@ -43,6 +44,7 @@ export class PdfController {
 
   @Get('download')
   async downloadPDF(@Query('type') type: string, @Res() res: Response) {
+    console.log('pdf다운로드를 시작합니다', type);
     let fileName: string;
     let htmlName: string;
     if (type === 'problem') {
@@ -52,25 +54,22 @@ export class PdfController {
       fileName = 'answer.pdf';
       htmlName = 'answer.html';
     } else {
-      return res.status(400).send('Invalid type parameter');
+      return res.status(400);
     }
 
+    const filePath = path.resolve('pandocs', fileName);
     try {
-      const result = await Promise.all([
-        this.pdfServiceRepository.downloadPdfFile(
-          'problem.html',
-          'problem.pdf',
-        ),
-        this.pdfServiceRepository.downloadPdfFile('answer.html', 'answer.pdf'),
-      ]);
-
-      const [problemResult, answerResult] = result;
-      if (problemResult.status === 200 && answerResult.status === 200) {
-        // this.pdfServiceRepository.streamPdfFile(res, problemPdfFilePath);
-        // this.pdfServiceRepository.streamPdfFile(res, answerPdfFilePath);
+      const result = await this.pdfServiceRepository.downloadPdfFile(
+        htmlName,
+        fileName,
+      );
+      if (result.status === 200) {
+        return this.pdfServiceRepository.streamPdfFile(res, filePath);
+      } else {
+        return res.status(500).send('PDF generation failed');
       }
     } catch (error) {
-      throw error;
+      return res.status(500).send('Internal server error');
     }
   }
 }
