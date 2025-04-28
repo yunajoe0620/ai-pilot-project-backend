@@ -47,16 +47,18 @@ export class ProblemService {
   async generateWolframProblems(prompt: string) {
     try {
       const response = await waApi.getFull({
-        input: `plot ${prompt}`,
-        // input: 'plot sin(x)',
+        input: prompt,
         output: 'json',
       });
-      console.log('response', response);
-      console.log('response', response.pods[0].subpods);
-      if (response.inputstring) {
+      // ImageSrc는 아래와 같은 모습이다다
+      //  https://www6b3.wolframalpha.com/Calculate/MSP/MSP5841i09458ci51ibdhf0000509afhe490h6fi2f?MSPStoreType=image/gif&s=10
+      const ImageSrc = response.pods[1].subpods[0].img.src;
+      console.log('ImageSrc', ImageSrc);
+      // response.pods[1].subpods;
+      if (ImageSrc) {
         return {
           status: 200,
-          process: response.inputstring,
+          ImageSrc,
         };
       }
 
@@ -342,4 +344,6 @@ export class ProblemService {
       console.error('Error generating Gemini problems:', error);
     }
   }
+
+  // ImageRect
 }

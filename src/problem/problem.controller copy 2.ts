@@ -1,6 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import fetch from 'node-fetch'; // Node.js용 fetch
 import { CreateProblems } from 'src/dto/problem';
 import { PdfService } from 'src/pdf/pdf.service';
 import { ProblemService } from './problem.service';
@@ -331,37 +330,35 @@ export class ProblemController {
         }   
     `;
     try {
-      //  수학공식을
-      // let prompt = 'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]';
-      let prompt = 'Plot3D[Sin[x] Cos[y], {x, -Pi, Pi}, {y, -Pi, Pi}]';
-
-      const result =
-        await this.problemServiceRepository.generateWolframProblems(prompt);
-      // console.log('result입니다', result);
-      if (result.ImageSrc) {
-        const response = await fetch(result.ImageSrc);
-        const buffer = await response.buffer();
-        const base64 = buffer.toString('base64');
-        const result100 = await ai.models.generateContent({
-          model: 'gemini-2.5-pro-preview-03-25',
-          contents: [
-            {
-              parts: [
-                {
-                  text: `이 이미지는 수학 함수의 그래프입니다. 이 이미지와 어울리는 문제를 만들어주세요. 난이도는 ${school}${grade}${subject}${quizSubject}여야만 해`,
-                },
-                {
-                  inlineData: {
-                    mimeType: 'image/png',
-                    data: base64,
-                  },
-                },
-              ],
-            },
-          ],
-        });
-        console.log('result100', result100.candidates[0].content);
-      }
+      // const result =
+      //   await this.problemServiceRepository.generateGeminiProblemsWithImages(
+      //     prompt,
+      //   );
+      // const mathFormula = result.mathFormula;
+      // const jsonParse = JSON.parse(mathFormula);
+      // const formula = jsonParse.mathFormula;
+      // console.log('formula', formula);
+      // const contents = `Hi, can you create a image of problem using ${formula}`;
+      // const response = await ai.models.generateContent({
+      //   model: 'gemini-2.0-flash-exp-image-generation',
+      //   contents: contents,
+      //   config: {
+      //     responseModalities: [Modality.TEXT, Modality.IMAGE],
+      //   },
+      // });
+      // console.log('response', response);
+      // for (const part of response.candidates[0].content.parts) {
+      //   console.log('part', part);
+      //   // Based on the part type, either show the text or save the image
+      //   if (part.text) {
+      //     console.log(part.text);
+      //   } else if (part.inlineData) {
+      //     const imageData = part.inlineData.data;
+      //     const buffer = Buffer.from(imageData, 'base64');
+      //     fs.writeFileSync('gemini-native-image.png', buffer);
+      //     console.log('Image saved as gemini-native-image.png');
+      //   }
+      // }
     } catch (error) {
       throw error;
     }
