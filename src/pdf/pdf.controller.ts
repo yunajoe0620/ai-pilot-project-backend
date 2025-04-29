@@ -44,7 +44,6 @@ export class PdfController {
 
   @Get('download')
   async downloadPDF(@Query('type') type: string, @Res() res: Response) {
-    console.log('pdf다운로드를 시작합니다', type);
     let fileName: string;
     let htmlName: string;
     if (type === 'problem') {

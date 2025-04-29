@@ -1,7 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import fetch from 'node-fetch'; // Node.js용 fetch
-import { CreateProblems } from 'src/dto/problem';
 import { PdfService } from 'src/pdf/pdf.service';
 import { ProblemService } from './problem.service';
 
@@ -321,34 +320,92 @@ export class ProblemController {
     let highLevel = Number(highLevelProblem);
     let mediumLevel = Number(mediumLevelProblem);
     let lowLevel = Number(lowLevelProblem);
-    let prompt = `${school}${grade}${subject}${quizSubject}에 대한 수학공식을 한 문제만 알려줘
-       복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 하는 공식으로다가.
-       수학적인 이미지 예를 들어 도형, 좌표 등이 필요한 공식이어야해. 다른 말은 언급하지말고, 아래와 같은 구조로 return을 해줘 
-        **최종 출력 형식:**
-        다음과 같은 JSON 형식으로 구조화하여 리턴해줘.
-        {
-          "mathFormula": 오직수학공식만,       
-        }   
-    `;
+
     try {
       //  수학공식을
-      // let prompt = 'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]';
-      let prompt = 'Plot3D[Sin[x] Cos[y], {x, -Pi, Pi}, {y, -Pi, Pi}]';
+      let prompt = 'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]';
+      // let prompt = 'Plot3D[Sin[x] Cos[y], {x, -Pi, Pi}, {y, -Pi, Pi}]';
 
       const result =
         await this.problemServiceRepository.generateWolframProblems(prompt);
       // console.log('result입니다', result);
       if (result.ImageSrc) {
-        const response = await fetch(result.ImageSrc);
-        const buffer = await response.buffer();
+        // const proxyImageUrl = `http://localhost:3001/image-proxy?url=${encodeURIComponent(wolframImageUrl)}`;
+        // console.log('hihi', encodeURIComponent(result.ImageSrc));
+        const proxyImageUrl = encodeURIComponent(result.ImageSrc);
+        console.log('proxyImageUrl', proxyImageUrl);
+
+        const ImageResponse = await fetch(result.ImageSrc);
+        const buffer = await ImageResponse.buffer();
         const base64 = buffer.toString('base64');
-        const result100 = await ai.models.generateContent({
+
+        fs.writeFileSync('test.png', base64, { encoding: 'base64' });
+        let problemprompt = `이 이미지는 수학 함수의 그래프입니다. 이 이미지와 어울리는 문제를 만들어주세요. 난이도는 ${school}${grade}${subject}${quizSubject}여야만 해
+        1. 문제 생성 시 필수 사항:  
+       - 각 문항의 수식은 MathML로 작성한다.  
+       - MathML 생성 시, 다음 오류를 반드시 피할 것:  
+         ❌ <mtable>을 <mo>, <mfenced>와 함께 사용 금지  
+         ❌ <math> 태그에 xmlns 속성을 중복 선언 금지 (한 번만 맨 처음 선언)  
+         ❌ <mrow> 안에 block-level 요소(<mtable>)만 있는 구조 금지  
+       -세 가지 오류(&lt;mtable>과 &lt;mo>, &lt;mfenced> 함께 사용 금지, xmlns 속성 중복 선언 금지, &lt;mrow> 안에 block-level 요소만 있는 구조 금지)를 반드시 지키기
+       - 모든 문항 생성 후, 각 문항의 표현이 올바른지, 계산 과정 및 답이 논리적으로 타당한지 자체적으로 점검하여 문제가 반드시 풀릴 수 있도록 검수한다.  
+       - 각 문항을 HTML 파일에 넣을 때는 반드시 아래의 템플릿을 지켜서 MathJax 호환성을 유지하도록 한다.
+       - 이미지 주소를 img태그 안에  넣어 이미지를 나타나게 한다.
+
+       - 문제와 정답을 다른 HTML에 넣는다
+
+
+        2. 문제 생성 시 유의 사항:  
+         - MathML 수식 표기 오류 최소화 
+
+         - 논리적으로 일관되고 풀 수 있는 문제 생성
+
+         - 문제 난이도 명확성 증가
+
+         - HTML 구조 오류 제거
+
+         - 문제 출력 형식의 일관성 확보
+      
+        3. HTML  문제 출력 템플릿  
+       <!DOCTYPE html>  
+         <html lang="ko">  
+         <head>  
+           <meta charset="UTF-8">  
+           <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+           <title>${school} ${grade}${subject}${quizSubject} 문제 </title>  
+         </head>  
+         <body>  
+           <div class="question">  
+             <h3>[문제 번호] [난이도 표시: 쉬움/보통/어려움] [유형: 서술형]</h3>    
+             <img src=${result.ImageSrc} width="300" height="300" crossorigin="anonymous">
+             <p>여기에 문제를 작성(MathML 코드 삽입)</p>  
+             </div>  
+           </body> 
+       </html> 
+       
+       4. HTML 정답 출력 템플릿
+       <!DOCTYPE html>  
+         <html lang="ko">  
+         <head>  
+           <meta charset="UTF-8">  
+           <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+           <title>${school} ${grade}${subject}${quizSubject} 정답 </title>  
+         </head>  
+         <body>  
+           <div class="answer">  
+             <h3>[문제 번호] 정답: [실제 정답 값] </h3> 
+             <p>문제에 대한 해설를 출력해줘(MathML 코드 삽입)</p>  
+             </div>  
+           </body> 
+       </html>    
+   `;
+        const response = await ai.models.generateContent({
           model: 'gemini-2.5-pro-preview-03-25',
           contents: [
             {
               parts: [
                 {
-                  text: `이 이미지는 수학 함수의 그래프입니다. 이 이미지와 어울리는 문제를 만들어주세요. 난이도는 ${school}${grade}${subject}${quizSubject}여야만 해`,
+                  text: problemprompt,
                 },
                 {
                   inlineData: {
@@ -359,8 +416,49 @@ export class ProblemController {
               ],
             },
           ],
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                problemHtml: {
+                  type: Type.STRING,
+                  description: '문제 HTML 형식',
+                },
+                answerHtml: {
+                  type: Type.STRING,
+                  description: '답안 HTML 형식',
+                },
+              },
+              required: ['problemHtml', 'answerHtml'],
+            },
+          },
         });
-        console.log('result100', result100.candidates[0].content);
+        if (
+          !response.candidates ||
+          response.candidates.length === 0 ||
+          !response.candidates[0].content ||
+          !response.candidates[0].content.parts ||
+          response.candidates[0].content.parts.length === 0
+        ) {
+          return { problemHtml: null, answerHtml: null };
+        }
+
+        const responseText = response.candidates[0].content.parts[0].text;
+
+        const parsedResponse = JSON.parse(responseText);
+        if (parsedResponse.problemHtml && parsedResponse.answerHtml) {
+          return {
+            status: 200,
+            cleanedproblemHtml: parsedResponse.problemHtml,
+            cleanedanswerHtml: parsedResponse.answerHtml,
+          };
+        }
+        return {
+          status: 400,
+          cleanedproblemHtml: null,
+          cleanedanswerHtml: null,
+        };
       }
     } catch (error) {
       throw error;
@@ -457,8 +555,6 @@ export class ProblemController {
         }
       }
 
-      return;
-
       // 주관식 처리
       const shortAnswerformattedProblem = latexShortAnswerProblems
         .replaceAll(/[\r\n]+/g, '')
@@ -494,137 +590,8 @@ export class ProblemController {
       throw error;
     }
   }
-  @Post('generate')
-  async createProblems(@Body() data: CreateProblems) {
-    try {
-      const prompt = data.promptData.trim();
-      const model = data.model.trim();
-      const result = await this.problemServiceRepository.generateProblems(
-        prompt,
-        model,
-      );
-      const newResponse = result.response.replaceAll('#', '');
-      const [problems, answers] = newResponse.split('*****answer*****');
-      const problemDocs = `
-      \\documentclass[fleqn]{article}      
-      \\usepackage{amsmath}
-      \\usepackage{amssymb} 
-      \\usepackage{fontspec}
-      \\usepackage{kotex} % 한국어 지원  
 
-      \\begin{document}      
-      ${problems}      
-      \\end{document} 
-  `;
-      const answerDocs = `
-      \\documentclass[fleqn]{article}      
-      \\usepackage{amsmath}
-      \\usepackage{amssymb} 
-      \\usepackage{fontspec}
-      \\usepackage{kotex} % 한국어 지원  
-
-      \\begin{document}      
-      ${answers}      
-      \\end{document} 
-  `;
-      if (result.response) {
-        return {
-          status: 200,
-          message: 'AI OUTPUT이 생성 되었습니다',
-          result,
-          problemDocs,
-          answerDocs,
-        };
-      }
-      return {
-        status: 400,
-        message: 'AI OUTPUT이 제대로 생성되지 않았습니다',
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  @Post('generate/pdf')
-  async createPdfs(@Body() data: any) {
-    const { problemDocs, answerDocs } = data;
-
-    try {
-      const problemPdfresult = await this.pdfServiceRepository.createTextFile(
-        'problemPdf',
-        problemDocs,
-      );
-
-      const answerPdfresult = await this.pdfServiceRepository.createTextFile(
-        'answerPdf',
-        answerDocs,
-      );
-
-      const isFinished = await Promise.all([problemPdfresult, answerPdfresult]);
-      if (isFinished.length === 2) {
-        return {
-          status: 200,
-          message: '문제가 제대로 생성되었습니다',
-          problemPdfresult,
-          answerPdfresult,
-        };
-      }
-      return {
-        status: 400,
-        message: '문제가 제대로 생성되지 않았습니다',
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  @Post('generate/output')
-  async createProb(@Body() data: any) {
-    try {
-      let result = data.rawOutput;
-      const newResponse = result.replaceAll('#', '');
-      const [problems, answers] = newResponse.split('*****answer*****');
-      const problemDocs = `
-       \\documentclass[fleqn]{article}      
-       \\usepackage{amsmath}
-       \\usepackage{amssymb} 
-       \\usepackage{fontspec}
-       \\usepackage{kotex} % 한국어 지원  
- 
-       \\begin{document}      
-       ${problems}      
-       \\end{document} 
-   `;
-      const answerDocs = `
-       \\documentclass[fleqn]{article}      
-       \\usepackage{amsmath}
-       \\usepackage{amssymb} 
-       \\usepackage{fontspec}
-       \\usepackage{kotex} % 한국어 지원  
- 
-       \\begin{document}      
-       ${answers}      
-       \\end{document} 
-   `;
-      if (result) {
-        return {
-          status: 200,
-          message: 'AI OUTPUT이 생성 되었습니다',
-          result,
-          problemDocs,
-          answerDocs,
-        };
-      }
-      return {
-        status: 400,
-        message: 'AI OUTPUT이 제대로 생성되지 않았습니다',
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // 문제 생각하여
+  // 비슷한문제 output
   @Get('generation/similar-problems')
   async generateSimilarProblems() {
     let prompt = `

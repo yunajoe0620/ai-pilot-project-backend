@@ -54,7 +54,6 @@ export class ProblemService {
       //  https://www6b3.wolframalpha.com/Calculate/MSP/MSP5841i09458ci51ibdhf0000509afhe490h6fi2f?MSPStoreType=image/gif&s=10
       const ImageSrc = response.pods[1].subpods[0].img.src;
       console.log('ImageSrc', ImageSrc);
-      // response.pods[1].subpods;
       if (ImageSrc) {
         return {
           status: 200,
@@ -295,50 +294,11 @@ export class ProblemService {
       }
 
       const responseText = response.candidates[0].content.parts[0].text;
-      try {
-        const parsedResponse = JSON.parse(responseText);
-        return {
-          problemHtml: parsedResponse.problemHtml,
-          answerHtml: parsedResponse.answerHtml,
-        };
-      } catch (error) {}
-    } catch (error) {
-      console.error('Error generating Gemini problems:', error);
-    }
-  }
 
-  // gemini
-
-  async generateGeminiProblemsWithImages(prompt: string) {
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro-preview-03-25',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              mathFormula: {
-                type: Type.STRING,
-                description: '수학공식만을 적는다다',
-              },
-            },
-            required: ['mathFormula'],
-          },
-        },
-      });
-      if (
-        !response.candidates ||
-        response.candidates.length === 0 ||
-        !response.candidates[0].content ||
-        !response.candidates[0].content.parts ||
-        response.candidates[0].content.parts.length === 0
-      ) {
-        return { mathFormula: null };
-      }
+      const parsedResponse = JSON.parse(responseText);
       return {
-        mathFormula: response.candidates[0].content.parts[0].text,
+        problemHtml: parsedResponse.problemHtml,
+        answerHtml: parsedResponse.answerHtml,
       };
     } catch (error) {
       console.error('Error generating Gemini problems:', error);
