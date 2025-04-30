@@ -1,6 +1,7 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import fetch from 'node-fetch'; // Node.js용 fetch
+import fetch from 'node-fetch';
+import * as path from 'path';
 import { PdfService } from 'src/pdf/pdf.service';
 import { ProblemService } from './problem.service';
 
@@ -324,139 +325,32 @@ export class ProblemController {
     try {
       //  수학공식을
       let prompt = 'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]';
+      let promptArray = [
+        'Plot[x^3, {x, -10, 10}]',
+        'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]',
+        'Plot[Log[x], {x, 0.1, 10}]',
+        'ParametricPlot[{Cos[t]^3, Sin[t]^3}, {t, 0, 2 Pi}]',
+        'ParametricPlot[{Sin[t], Sin[2 t]}, {t, 0, 2 Pi}]',
+      ];
+
+      //[{formula:"", ImageSrc:""}, ....]
 
       const result =
-        await this.problemServiceRepository.generateWolframProblems(prompt);
-      if (result.ImageSrc) {
-        console.log('이미지주소', result.ImageSrc);
-        //  result.imageSrc = https://www6b3.wolframalpha.com/Calculate/MSP/MSP82013257gbhfb0geg9900002ed66463f3496318?MSPStoreType=image/gif&s=5
-        // // 예: React나 Vue에서 이미지 src를 이렇게 설정해야 함
-        // <img src="http://localhost:5000/problem/Calculate/MSP/MSP11471i9h3d3ch4950dg700001ii8fgcia767e328?MSPStoreType=image/gif&s=12" />
-        const ImageResponse = await fetch(result.ImageSrc);
+        await this.problemServiceRepository.generateWolframProblems(
+          promptArray,
+        );
+      // for문을 돌려서 이미지 file를 저장한다.
+      result.forEach(async (obj) => {
+        const { ImageSrc, formula } = obj;
+        const ImageResponse = await fetch(ImageSrc);
         const buffer = await ImageResponse.buffer();
         const base64 = buffer.toString('base64');
+        const filePath = path.resolve('files', `${formula}.png`);
+        // 파일을 저장
+        fs.writeFileSync(filePath, base64, { encoding: 'base64' });
+      });
 
-        fs.writeFileSync('test.png', base64, { encoding: 'base64' });
-        let problemprompt = `이 이미지는 수학 함수의 그래프입니다. 이 이미지와 어울리는 문제를 만들어주세요. 난이도는 ${school}${grade}${subject}${quizSubject}여야만 해
-        1. 문제 생성 시 필수 사항:  
-       - 각 문항의 수식은 MathML로 작성한다.  
-       - MathML 생성 시, 다음 오류를 반드시 피할 것:  
-         ❌ <mtable>을 <mo>, <mfenced>와 함께 사용 금지  
-         ❌ <math> 태그에 xmlns 속성을 중복 선언 금지 (한 번만 맨 처음 선언)  
-         ❌ <mrow> 안에 block-level 요소(<mtable>)만 있는 구조 금지  
-       -세 가지 오류(&lt;mtable>과 &lt;mo>, &lt;mfenced> 함께 사용 금지, xmlns 속성 중복 선언 금지, &lt;mrow> 안에 block-level 요소만 있는 구조 금지)를 반드시 지키기
-       - 모든 문항 생성 후, 각 문항의 표현이 올바른지, 계산 과정 및 답이 논리적으로 타당한지 자체적으로 점검하여 문제가 반드시 풀릴 수 있도록 검수한다.  
-       - 각 문항을 HTML 파일에 넣을 때는 반드시 아래의 템플릿을 지켜서 MathJax 호환성을 유지하도록 한다.
-       - 이미지 주소를 img태그 안에  넣어 이미지를 나타나게 한다.
-
-       - 문제와 정답을 다른 HTML에 넣는다
-
-
-        2. 문제 생성 시 유의 사항:  
-         - MathML 수식 표기 오류 최소화 
-
-         - 논리적으로 일관되고 풀 수 있는 문제 생성
-
-         - 문제 난이도 명확성 증가
-
-         - HTML 구조 오류 제거
-
-         - 문제 출력 형식의 일관성 확보
-      
-        3. HTML  문제 출력 템플릿  
-       <!DOCTYPE html>  
-         <html lang="ko">  
-         <head>  
-           <meta charset="UTF-8">  
-           <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
-           <title>${school} ${grade}${subject}${quizSubject} 문제 </title>  
-         </head>  
-         <body>  
-           <div class="question">  
-             <h3>[문제 번호] [난이도 표시: 쉬움/보통/어려움] [유형: 서술형]</h3>    
-             <img src=${result.ImageSrc} width="300" height="300" crossorigin="anonymous">
-             <p>여기에 문제를 작성(MathML 코드 삽입)</p>  
-             </div>  
-           </body> 
-       </html> 
-       
-       4. HTML 정답 출력 템플릿
-       <!DOCTYPE html>  
-         <html lang="ko">  
-         <head>  
-           <meta charset="UTF-8">  
-           <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
-           <title>${school} ${grade}${subject}${quizSubject} 정답 </title>  
-         </head>  
-         <body>  
-           <div class="answer">  
-             <h3>[문제 번호] 정답: [실제 정답 값] </h3> 
-             <p>문제에 대한 해설를 출력해줘(MathML 코드 삽입)</p>  
-             </div>  
-           </body> 
-       </html>    
-   `;
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-pro-preview-03-25',
-          contents: [
-            {
-              parts: [
-                {
-                  text: problemprompt,
-                },
-                {
-                  inlineData: {
-                    mimeType: 'image/png',
-                    data: base64,
-                  },
-                },
-              ],
-            },
-          ],
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                problemHtml: {
-                  type: Type.STRING,
-                  description: '문제 HTML 형식',
-                },
-                answerHtml: {
-                  type: Type.STRING,
-                  description: '답안 HTML 형식',
-                },
-              },
-              required: ['problemHtml', 'answerHtml'],
-            },
-          },
-        });
-        if (
-          !response.candidates ||
-          response.candidates.length === 0 ||
-          !response.candidates[0].content ||
-          !response.candidates[0].content.parts ||
-          response.candidates[0].content.parts.length === 0
-        ) {
-          return { problemHtml: null, answerHtml: null };
-        }
-
-        const responseText = response.candidates[0].content.parts[0].text;
-
-        const parsedResponse = JSON.parse(responseText);
-        if (parsedResponse.problemHtml && parsedResponse.answerHtml) {
-          return {
-            status: 200,
-            cleanedproblemHtml: parsedResponse.problemHtml,
-            cleanedanswerHtml: parsedResponse.answerHtml,
-          };
-        }
-        return {
-          status: 400,
-          cleanedproblemHtml: null,
-          cleanedanswerHtml: null,
-        };
-      }
+      console.log('result', result);
     } catch (error) {
       throw error;
     }

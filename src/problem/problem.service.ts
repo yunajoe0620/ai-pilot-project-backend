@@ -43,31 +43,30 @@ export class ProblemService {
     console.log('response', response.candidates[0].content);
   }
 
-  // 그림문제를 콜 하는 API
-  async generateWolframProblems(prompt: string) {
-    try {
-      const response = await waApi.getFull({
-        input: prompt,
-        output: 'json',
-      });
-      // ImageSrc는 아래와 같은 모습이다다
-      //  https://www6b3.wolframalpha.com/Calculate/MSP/MSP5841i09458ci51ibdhf0000509afhe490h6fi2f?MSPStoreType=image/gif&s=10
-      const ImageSrc = response.pods[1].subpods[0].img.src;
-      console.log('ImageSrc', ImageSrc);
-      if (ImageSrc) {
-        return {
-          status: 200,
-          ImageSrc,
-        };
-      }
+  // 그림문제를 콜 하는 API ()
+  async generateWolframProblems(formulaArray: string[]) {
+    const results = [];
 
-      return {
-        status: 400,
-        process: null,
-      };
-    } catch (error) {
-      throw error;
+    for (const formula of formulaArray) {
+      try {
+        const response = await waApi.getFull({
+          input: formula,
+          ouput: 'json',
+        });
+
+        // console.log('response', response, 'formula', formula);
+        if (response.success) {
+          const ImageSrc = response?.pods[1]?.subpods[0]?.img.src;
+          results.push({ formula, ImageSrc });
+        } else {
+          results.push({ formula, ImageSrc: 'NO IMAGE' });
+        }
+      } catch (error) {
+        throw error;
+      }
     }
+
+    return results;
   }
 
   // string을 markdown파일로 만드는 함수

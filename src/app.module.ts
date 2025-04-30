@@ -4,6 +4,8 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { HtmlModule } from './html/html.module';
 import { PdfModule } from './pdf/pdf.module';
 import { ProblemModule } from './problem/problem.module';
@@ -40,10 +42,10 @@ const dbConfig: TypeOrmModuleOptions = {
     //   rootPath: join(__dirname, '..', 'files', 'latex'),
     //   serveRoot: '/pdf', // pdf/pdf파일이름 이렇게 지정이 된다.
     // }),
-    // ServeStaticModule.forRoot({
-    //   rootPath: join(__dirname, '..', 'files', 'pdf'),
-    //   serveRoot: '/files/pdf',
-    // }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'files'),
+      serveRoot: '/files',
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
