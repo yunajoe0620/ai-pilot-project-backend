@@ -10,7 +10,6 @@ import { ProblemModule } from './problem/problem.module';
 import { MiddleSchoolModule } from './school/middleSchool.module';
 import { RecommendationsModule } from './survey/recommendations.module';
 
-// .aux파일은  LaTeX 문서에서 여러 번의 컴파일을 통해 필요한 정보를 저장하고, 이를 바탕으로 인용, 참조, 목차, 레퍼런스 등을 정확하게 처리
 const SYNC = false;
 
 const dbConfig: TypeOrmModuleOptions = {

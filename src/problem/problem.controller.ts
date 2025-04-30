@@ -324,17 +324,14 @@ export class ProblemController {
     try {
       //  수학공식을
       let prompt = 'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]';
-      // let prompt = 'Plot3D[Sin[x] Cos[y], {x, -Pi, Pi}, {y, -Pi, Pi}]';
 
       const result =
         await this.problemServiceRepository.generateWolframProblems(prompt);
-      // console.log('result입니다', result);
       if (result.ImageSrc) {
-        // const proxyImageUrl = `http://localhost:3001/image-proxy?url=${encodeURIComponent(wolframImageUrl)}`;
-        // console.log('hihi', encodeURIComponent(result.ImageSrc));
-        const proxyImageUrl = encodeURIComponent(result.ImageSrc);
-        console.log('proxyImageUrl', proxyImageUrl);
-
+        console.log('이미지주소', result.ImageSrc);
+        //  result.imageSrc = https://www6b3.wolframalpha.com/Calculate/MSP/MSP82013257gbhfb0geg9900002ed66463f3496318?MSPStoreType=image/gif&s=5
+        // // 예: React나 Vue에서 이미지 src를 이렇게 설정해야 함
+        // <img src="http://localhost:5000/problem/Calculate/MSP/MSP11471i9h3d3ch4950dg700001ii8fgcia767e328?MSPStoreType=image/gif&s=12" />
         const ImageResponse = await fetch(result.ImageSrc);
         const buffer = await ImageResponse.buffer();
         const base64 = buffer.toString('base64');
