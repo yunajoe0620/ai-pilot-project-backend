@@ -25,7 +25,6 @@ const deepSeekOpenAI = new OpenAI({
 });
 
 export class ProblemService {
-  // 비슷한 문제 유형 콜 하는 API
   async generateSimilarProblems(prompt: string) {
     const filePath = path.resolve('files', 'test.png');
     const myfile = await ai.files.upload({
@@ -54,7 +53,6 @@ export class ProblemService {
           ouput: 'json',
         });
 
-        // console.log('response', response, 'formula', formula);
         if (response.success) {
           const ImageSrc = response?.pods[1]?.subpods[0]?.img.src;
           results.push({ formula, ImageSrc });
@@ -69,7 +67,6 @@ export class ProblemService {
     return results;
   }
 
-  // string을 markdown파일로 만드는 함수
   async generateMarkDownFile(markDownString: string, fileName: string) {
     try {
       const timeStampWithFilename = `${fileName}.md`;
@@ -91,9 +88,7 @@ export class ProblemService {
       throw error;
     }
   }
-  // markdown파일을 읽고 tex 파일로 변환하는 펑션
-  // filename은 problemMarkdown과 answerMarkDown2가지일뿐이다.
-  // outpufilename problem과 output2가지일뿐이다.
+
   async convertMarkDownToLatex(
     filename: string,
     outputFileName: string,
@@ -176,89 +171,6 @@ export class ProblemService {
     }
   }
 
-  // for deepseek
-  async generateDeepSeekproblems(prompt: string, model: string) {
-    try {
-      const response = await deepSeekOpenAI.chat.completions.create({
-        model: model,
-        messages: [
-          {
-            role: 'system',
-            content: [
-              {
-                type: 'text',
-                text: `
-                    You are a math tutor that answers in korean
-                  `,
-              },
-            ],
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: prompt,
-              },
-            ],
-          },
-        ],
-      });
-      return {
-        response: response.choices[0].message.content,
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-  // gemini
-  async generateGeminiProblems(prompt: string) {
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro-preview-03-25',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                level: {
-                  type: Type.STRING,
-                  enum: ['상', '중', '하'],
-                  description: '문제 난이도 (상, 중, 하)',
-                },
-                problem: {
-                  type: Type.STRING,
-                  description: '문제 내용 (문제 번호를 포함하지 않음)',
-                },
-                answer: {
-                  type: Type.OBJECT,
-                  properties: {
-                    result: {
-                      type: Type.STRING,
-                      description: '답 (오직 답만)',
-                    },
-                    explain: {
-                      type: Type.STRING,
-                      description: '문제 풀이 과정',
-                    },
-                  },
-                  required: ['result', 'explain'],
-                },
-              },
-              required: ['level', 'problem', 'answer'],
-            },
-          },
-        },
-      });
-      return response.candidates[0].content.parts[0].text;
-    } catch (error) {
-      console.error('Error generating Gemini problems:', error);
-    }
-  }
-  // gemini
   async generateGeminiProblemsWithHtmlFormat(prompt: string) {
     try {
       const response = await ai.models.generateContent({
@@ -303,6 +215,4 @@ export class ProblemService {
       console.error('Error generating Gemini problems:', error);
     }
   }
-
-  // ImageRect
 }

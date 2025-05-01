@@ -333,149 +333,111 @@ export class ProblemController {
         'ParametricPlot[{Sin[t], Sin[2 t]}, {t, 0, 2 Pi}]',
       ];
 
-      //[{formula:"", ImageSrc:""}, ....]
-
       const result =
         await this.problemServiceRepository.generateWolframProblems(
           promptArray,
         );
-      // for문을 돌려서 이미지 file를 저장한다.
       result.forEach(async (obj) => {
         const { ImageSrc, formula } = obj;
         const ImageResponse = await fetch(ImageSrc);
         const buffer = await ImageResponse.buffer();
         const base64 = buffer.toString('base64');
         const filePath = path.resolve('files', `${formula}.png`);
-        // 파일을 저장
         fs.writeFileSync(filePath, base64, { encoding: 'base64' });
       });
+      // 문제들 담는 HTML
+      let problemPrompt = ``;
+      let answerPrompt = ``;
+      // === 이미지 파일이 저장이 된다 ====  the End
+      let finalPrompt = `
+        1. 문제 생성 시 필수 사항:
+         - 각 문항의 수식은 MathML로 작성한다.
+         - MathML 생성 시, 다음 오류를 반드시 피할 것:
+          ❌ <mtable>을 <mo>, <mfenced>와 함께 사용 금지
+          ❌ <math> 태그에 xmlns 속성을 중복 선언 금지 (한 번만 맨 처음 선언)
+          ❌ <mrow> 안에 block-level 요소(<mtable>)만 있는 구조 금지
+        - 모든 문항 생성 후, 각 문항의 표현이 올바른지, 계산 과정 및 답이 논리적으로 타당한지 자체적으로 점검하여 문제가 반드시 풀릴 수 있도록 검수한다.
+        - 각 문항을 HTML 파일에 넣을 때는 반드시 아래의 템플릿을 지켜서 MathJax 호환성을 유지하도록 한다.
+        - 이미지 주소를 img태그 안에  넣어 이미지를 나타나게 한다.
 
-      console.log('result', result);
-    } catch (error) {
-      throw error;
-    }
-  }
-  @Post('test')
-  async createTestProblem(@Body() data: any) {
-    try {
-      const {
-        school,
-        grade,
-        subject,
-        quizSubject,
-        multipleChoice,
-        shortAnswer,
-        highLevelProblem,
-        mediumLevelProblem,
-        lowLevelProblem,
-      } = data;
-      let multipleChoiceProblem = Number(multipleChoice);
-      let shortProblem = Number(shortAnswer);
-      let totalProblem = multipleChoiceProblem + shortProblem;
-      let highLevel = Number(highLevelProblem);
-      let mediumLevel = Number(mediumLevelProblem);
-      let lowLevel = Number(lowLevelProblem);
-      let latexShortAnswerProblems = '';
-      let latexShortAnswers = '';
-      let latexMultipleChoieProblems = '';
-      let latexMultipleChoiceAnswers = '';
-      // 주관식 문제가 있을때
-      if (shortProblem > 0) {
-        let subjectPrompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 보내줘. 
-        나오는 결과값을 array 키값 quiz에 담아주고 array안에는 문제와 정답을 JSON형식으로 문제는 problem에 넣어주고. 정답은 answer에 넣어줘. 문제에 대한 난이도는 level에 넣어줘
-        난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${totalProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
-        난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제
+        - 문제와 정답을 다른 HTML에 넣는다
 
-        answer에 대한 답은 answer.result, 풀이과정은 answer.explain에 넣어줘. 수학 수식은 LaTeX 형식으로 작성하고, 수식은 $기호로 감싸줘
-        아래와 같은 형태일꺼야. 
-        quiz: [
-           {
-            level: 문제난이도(상, 중, 하 로만 표시)
-            problem: 문제(문제앞에는 문제 번호를 쓰지 말아줘), 
-            answer: {
-              result: 답(오직 답만)
-              explain: 문제 풀이과정
-            }
-          }
-        ]
+        2. 문제 생성 시 유의 사항:
+        - MathML 수식 표기 오류 최소화
+        - 논리적으로 일관되고 풀 수 있는 문제 생성
+        - 문제 난이도 명확성 증가
+        - HTML 구조 오류 제거
+        - 문제 출력 형식의 일관성 확보          
+        출력형태는 아래와 같다.       
+    
+        `;
+      let fileUrl;
+      result.forEach((item, index) => {
+        const { formula, ImageSrc } = item;
+        fileUrl = `http://localhost:5000/files/${formula}`;
+        const problemNumber = index + 1;
+        problemPrompt += `이 이미지들은수학 그래프입니다. 이 이미지와 어울리는 문제를 만들어주세요.
+          아래 템플릿 형식은 각각 문제의 템플릿 형식
+          <div class="question">
+            <h3>문제 ${problemNumber} [난이도 표시: 어려움/보통/쉬움] [유형: 서술형/객관형]</h3>
+            <img src="${fileUrl}.png" width="300" height="300" crossorigin="anonymous">
+            <p>여기에 문제를 작성(MathML 코드 삽입)</p>
+          </div>  
+        `;
+        answerPrompt += `문제마다의 정답과 해설 템플릿형식
+          <div class="answer">
+            <h3>문제 ${problemNumber} 정답: [실제 정답 값] </h3>
+            <p>문제에 대한 해설을 출력해줘(MathML 코드 삽입)</p>
+          </div>
+        `;
+      });
+      finalPrompt += `
+       3. HTML 문제 출력 템플릿 
+      <!DOCTYPE html>  
+       <html lang="ko">
+        <head>  
+            <meta charset="UTF-8">  
+            <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+            <title>${school} ${grade}${subject}${quizSubject} 문제 </title>  
+        </head>     
+        <div class="question-container">
+            ${problemPrompt}   
+        </div>
+      </html>
       `;
+      finalPrompt += `
+       4. HTML 정답 출력 템플릿 
+      <!DOCTYPE html>
+      <html lang="ko">
+      <head>  
+        <meta charset="UTF-8">  
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+        <title>${school} ${grade}${subject}${quizSubject} 정답 </title>  
+      </head> 
+      <div class="answer-container">
+          ${problemPrompt}   
+       </div>
+      </html>
+       `;
 
-        const result = await this.problemServiceRepository.generateProblems(
-          subjectPrompt,
-          'gpt-4o-mini',
+      const problempromptResponse =
+        await this.problemServiceRepository.generateGeminiProblemsWithHtmlFormat(
+          finalPrompt,
         );
 
-        const jsonParse = JSON.parse(result.response);
+      const { problemHtml, answerHtml } = problempromptResponse;
 
-        jsonParse.quiz.forEach((data, i) => {
-          latexShortAnswerProblems += `${i + 1} 난이도: ${data.level}\n ${data.problem}\n\n`;
-          latexShortAnswers += `${i + 1}\n [정답] ${data.answer.result}\n ${data.answer.explain}\n\n`;
-        });
-
-        // 마크다운 파일을 만든다. 성공적으로 만들었으면 status 200
-        const response =
-          await this.problemServiceRepository.generateMarkDownFile(
-            latexShortAnswerProblems,
-            'problemMarkdown',
-          );
-
-        if (response.status === 200) {
-          // markdown file에서 latex 파일로 변환하는 method. 성곡곡
-          const result1: any =
-            await this.problemServiceRepository.convertMarkDownToLatex(
-              'problemMarkdown',
-              'problem',
-            );
-          const { status, filename } = result1;
-
-          // latex로 잘 생성이 되었다면은
-          if (status === 200) {
-            const problemPdfresult: any =
-              await this.pdfServiceRepository.createPdfFile(filename);
-            return {
-              problemfilename: problemPdfresult.filename,
-              status: problemPdfresult.status,
-              message: problemPdfresult.message,
-            };
-          }
-        } else {
-          return {
-            status: response.status,
-            message: response.message,
-          };
-        }
-      }
-
-      // 주관식 처리
-      const shortAnswerformattedProblem = latexShortAnswerProblems
-        .replaceAll(/[\r\n]+/g, '')
-        .replaceAll('/\beq\b/g', '=')
-        .replaceAll('/\bext\b/g', '\\text');
-
-      // 객관식 처리
-      const multipleChoiceformattedProblem = latexMultipleChoieProblems.replace(
-        /[\r\n]+/g,
-        '',
-      );
-      const multipleChoiceformattedAnswer = latexMultipleChoiceAnswers.replace(
-        /[\r\n]+/g,
-        '',
-      );
-      const problemDocs = `\\documentclass[fleqn]{article}\n\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage{fontspec}\n\\usepackage{kotex} % 한국어 지원\n\\begin{document}\n\\noindent\n${shortAnswerformattedProblem}${multipleChoiceformattedProblem}\n\\end{document}`;
-
-      const answerDocs = `\\documentclass[fleqn]{article}\n\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage{fontspec}\n\\usepackage{kotex} % 한국어 지원\n\\begin{document}\n\\noindent\n${latexShortAnswers}${multipleChoiceformattedAnswer}\n\\end{document}`;
-
-      if (problemDocs && answerDocs) {
+      if (problemHtml && answerHtml) {
         return {
           status: 200,
-          message: 'AI OUTPUT이 생성 되었습니다',
-          problemDocs,
-          answerDocs,
+          cleanedproblemHtml: problemHtml,
+          cleanedanswerHtml: answerHtml,
         };
       }
       return {
         status: 400,
-        message: 'AI OUTPUT이 생성에 실패하였습니다.',
+        cleanedproblemHtml: null,
+        cleanedanswerHtml: null,
       };
     } catch (error) {
       throw error;

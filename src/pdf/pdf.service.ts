@@ -47,8 +47,6 @@ export class PdfService {
       const inputDir = path.resolve('pandocs', 'markdown');
       const texFilePath = path.join(inputDir, `${filename}.tex`);
 
-      // files폴더 아래에 pdf폴더를 생성한다.
-
       fs.mkdirSync(outputDir, { recursive: true });
       const command = `cd pandocs & cd markdown & dir & lualatex -output-directory="${outputDir}" "${texFilePath}"`;
 
