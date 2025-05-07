@@ -1,18 +1,39 @@
-import { GoogleGenAI } from '@google/genai';
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import fetch from 'node-fetch';
-import * as path from 'path';
+import path from 'path';
 import { PdfService } from 'src/pdf/pdf.service';
 import { ProblemService } from './problem.service';
 
+const sharp = require('sharp');
+
 const fs = require('fs');
-const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI });
 @Controller('problem')
 export class ProblemController {
   constructor(
     private readonly problemServiceRepository: ProblemService,
     private readonly pdfServiceRepository: PdfService,
   ) {}
+
+  // (async () => {
+  //   for (let index = 0; index < result.length; index++) {
+  //     const { ImageSrc, formula } = result[index];
+  //     try {
+  //       const response = await fetch(ImageSrc);
+  //       const buffer = await response.buffer();
+
+  //       const outputPath = path.resolve('files', `${index}.png`);
+  //       console.log('버퍼 OK', index);
+
+  //       const sharpResult = await sharp(buffer)
+  //         .png()
+  //         .toFile(outputPath);
+
+  //       console.log('✅ 저장 성공:', sharpResult);
+  //     } catch (err) {
+  //       console.error(`❌ 에러 발생 (${index}):`, err.message);
+  //     }
+  //   }
+  // })();
 
   @Post('generate/gemini')
   async createGeminiProblem(@Body() data: any) {
@@ -337,14 +358,41 @@ export class ProblemController {
         await this.problemServiceRepository.generateWolframProblems(
           promptArray,
         );
-      result.forEach(async (obj, index) => {
-        const { ImageSrc, formula } = obj;
-        const ImageResponse = await fetch(ImageSrc);
-        const buffer = await ImageResponse.buffer();
-        const base64 = buffer.toString('base64');
-        const filePath = path.resolve('files', `${index}.png`);
-        fs.writeFileSync(filePath, base64, { encoding: 'base64' });
-      });
+      // 비동기 함수는 forEach에 안되는데 왜 구럴깡튜?
+      // result.forEach(async (obj, index) => {
+      //   const { ImageSrc, formula } = obj;
+      //   const ImageResponse = await fetch(ImageSrc);
+      //   const buffer = await ImageResponse.buffer();
+      //   const base64 = buffer.toString('base64');
+      //   const filePath = path.resolve('files', `${index}.png`);
+      //   console.log('나는BUffer', buffer, '나는Index', index);
+      //   const result = await sharp(buffer)
+      //     .png() // PNG로 강제 변환
+      //     .toFile(filePath);
+      //   console.log('하잇', result);
+      //   // fs.writeFileSync(filePath, base64, { encoding: 'base64' });
+      // });
+      (async () => {
+        for (let i = 0; i < result.length; i++) {
+          const { ImageSrc, formula } = result[i];
+
+          try {
+            console.log(' ImageSrc', ImageSrc);
+            const ImageResponse = await fetch(ImageSrc);
+            // console.log('ImageREsponse', ImageResponse);
+
+            const buffer = await ImageResponse.buffer();
+            // const arrayBuffer = await ImageResponse.arrayBuffer();
+            // const buffer = Buffer.from(arrayBuffer);
+            const outputPath = path.resolve('files', `${i}.png`);
+            const sharpResult = await sharp(buffer).png().toFile(outputPath);
+            console.log('sharpresult', sharpResult);
+          } catch (error) {
+            console.log('error', error);
+          }
+        }
+      })();
+
       // 문제들 담는 HTML
       let problemPrompt = ``;
       let answerPrompt = ``;
@@ -375,11 +423,7 @@ export class ProblemController {
       result.forEach((item, index) => {
         const { formula, ImageSrc } = item;
 
-        // 안된다 후엥~
-        // C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\files
         fileUrl = `http://localhost:5000/files/${index}.png`;
-
-        // const filePath = path.resolve('files', `${index}.png`);
 
         const problemNumber = index + 1;
         problemPrompt += `이 이미지들은수학 그래프입니다. 이 이미지와 어울리는 문제를 만들어주세요.

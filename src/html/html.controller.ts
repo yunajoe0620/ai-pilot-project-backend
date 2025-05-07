@@ -8,6 +8,8 @@ export class HTMLController {
   @Post('generate')
   async createProblems(@Body() data: any) {
     const { problemHtmlText, answerHtmlText } = data;
+    console.log('problemHtmlText', problemHtmlText);
+    console.log('answerHtmlText', answerHtmlText);
 
     try {
       Promise.all([
