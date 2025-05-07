@@ -1,6 +1,4 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import fetch from 'node-fetch';
-import path from 'path';
 import { PdfService } from 'src/pdf/pdf.service';
 import { ProblemService } from './problem.service';
 
@@ -345,7 +343,6 @@ export class ProblemController {
 
     try {
       //  수학공식을
-      let prompt = 'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]';
       let promptArray = [
         'Plot[x^3, {x, -10, 10}]',
         'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]',
@@ -359,39 +356,21 @@ export class ProblemController {
           promptArray,
         );
       // 비동기 함수는 forEach에 안되는데 왜 구럴깡튜?
+      console.log('Result입니다아아', result);
+      result.forEach(async (item) => {
+        console.log('ITEM입니다 ====>>>>>>>', item);
+      });
       // result.forEach(async (obj, index) => {
       //   const { ImageSrc, formula } = obj;
+      //   console.log('ImageSrc', ImageSrc);
       //   const ImageResponse = await fetch(ImageSrc);
       //   const buffer = await ImageResponse.buffer();
       //   const base64 = buffer.toString('base64');
       //   const filePath = path.resolve('files', `${index}.png`);
-      //   console.log('나는BUffer', buffer, '나는Index', index);
-      //   const result = await sharp(buffer)
-      //     .png() // PNG로 강제 변환
-      //     .toFile(filePath);
-      //   console.log('하잇', result);
-      //   // fs.writeFileSync(filePath, base64, { encoding: 'base64' });
+      //   console.log('filePath', filePath);
+
+      //   fs.writeFileSync(filePath, base64, { encoding: 'base64' });
       // });
-      (async () => {
-        for (let i = 0; i < result.length; i++) {
-          const { ImageSrc, formula } = result[i];
-
-          try {
-            console.log(' ImageSrc', ImageSrc);
-            const ImageResponse = await fetch(ImageSrc);
-            // console.log('ImageREsponse', ImageResponse);
-
-            const buffer = await ImageResponse.buffer();
-            // const arrayBuffer = await ImageResponse.arrayBuffer();
-            // const buffer = Buffer.from(arrayBuffer);
-            const outputPath = path.resolve('files', `${i}.png`);
-            const sharpResult = await sharp(buffer).png().toFile(outputPath);
-            console.log('sharpresult', sharpResult);
-          } catch (error) {
-            console.log('error', error);
-          }
-        }
-      })();
 
       // 문제들 담는 HTML
       let problemPrompt = ``;

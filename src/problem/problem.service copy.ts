@@ -42,32 +42,22 @@ export class ProblemService {
     const results = [];
 
     for (const formula of formulaArray) {
-      console.log('formula', formula); // Plot[x^3, {x, -10, 10}]
       try {
-        const apiUrl =
-          'https://www.wolframcloud.com/obj/fineteacher1/expressionAPI';
-        const encodedFormula = encodeURIComponent(formula);
-        console.log('encodedFormmula', encodedFormula);
-        const response = await fetch(`${apiUrl}?expr=${encodedFormula}`);
-        if (!response.ok) {
-          throw new Error('API 호출 실패');
+        const response = await waApi.getFull({
+          input: formula,
+          ouput: 'json',
+          format: 'image,plaintext',
+          imagemode: 'png',
+        });
+        // http://api.wolframalpha.com/v2/query?appid=DEMO&input=population%20of%20france
+        console.log('response', response);
+
+        if (response.success) {
+          const ImageSrc = response?.pods[1]?.subpods[0]?.img.src;
+          results.push({ formula, ImageSrc });
+        } else {
+          results.push({ formula, ImageSrc: 'NO IMAGE' });
         }
-        results.push(response);
-
-        // const response = await waApi.getFull({
-        //   input: formula,
-        //   ouput: 'json',
-        //   format: 'image,plaintext',
-        //   imagemode: 'png',
-        // });
-        // console.log('response', response);
-
-        // if (response.success) {
-        //   const ImageSrc = response?.pods[1]?.subpods[0]?.img.src;
-        //   results.push({ formula, ImageSrc });
-        // } else {
-        //   results.push({ formula, ImageSrc: 'NO IMAGE' });
-        // }
       } catch (error) {
         throw error;
       }
