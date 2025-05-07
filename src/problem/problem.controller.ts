@@ -337,12 +337,12 @@ export class ProblemController {
         await this.problemServiceRepository.generateWolframProblems(
           promptArray,
         );
-      result.forEach(async (obj) => {
+      result.forEach(async (obj, index) => {
         const { ImageSrc, formula } = obj;
         const ImageResponse = await fetch(ImageSrc);
         const buffer = await ImageResponse.buffer();
         const base64 = buffer.toString('base64');
-        const filePath = path.resolve('files', `${formula}.png`);
+        const filePath = path.resolve('files', `${index}.png`);
         fs.writeFileSync(filePath, base64, { encoding: 'base64' });
       });
       // 문제들 담는 HTML
@@ -374,13 +374,19 @@ export class ProblemController {
       let fileUrl;
       result.forEach((item, index) => {
         const { formula, ImageSrc } = item;
-        fileUrl = `http://localhost:5000/files/${formula}`;
+
+        // 안된다 후엥~
+        // C:\Users\yunaj\OneDrive\바탕 화면\ai-pilot-project-backend\files
+        fileUrl = `http://localhost:5000/files/${index}.png`;
+
+        // const filePath = path.resolve('files', `${index}.png`);
+
         const problemNumber = index + 1;
         problemPrompt += `이 이미지들은수학 그래프입니다. 이 이미지와 어울리는 문제를 만들어주세요.
           아래 템플릿 형식은 각각 문제의 템플릿 형식
           <div class="question">
             <h3>문제 ${problemNumber} [난이도 표시: 어려움/보통/쉬움] [유형: 서술형/객관형]</h3>
-            <img src="${fileUrl}.png" width="300" height="300" crossorigin="anonymous">
+            <img src=${fileUrl} width="300" height="300" crossorigin="anonymous">
             <p>여기에 문제를 작성(MathML 코드 삽입)</p>
           </div>  
         `;
