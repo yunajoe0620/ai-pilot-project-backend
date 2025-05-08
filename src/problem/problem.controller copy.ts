@@ -1,13 +1,16 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import * as fs from 'fs';
 import fetch from 'node-fetch';
 import * as path from 'path';
+import { PdfService } from 'src/pdf/pdf.service';
 import { ProblemService } from './problem.service';
-const sharp = require('sharp');
 
+const fs = require('fs');
 @Controller('problem')
 export class ProblemController {
-  constructor(private readonly problemServiceRepository: ProblemService) {}
+  constructor(
+    private readonly problemServiceRepository: ProblemService,
+    private readonly pdfServiceRepository: PdfService,
+  ) {}
 
   @Post('generate/gemini')
   async createGeminiProblem(@Body() data: any) {
@@ -331,27 +334,20 @@ export class ProblemController {
         await this.problemServiceRepository.generateWolframProblems(
           promptArray,
         );
+      // 비동기 함수는 forEach에 안되는데 왜 구럴깡튜?
+      console.log('Result입니다아아', result);
 
-      for (let [index, obj] of result.entries()) {
+      result.forEach(async (obj, index) => {
         const { newImageSrc, formula } = obj;
-        console.log('새로운 ImageSrc:', newImageSrc);
+        console.log('새로운 ImageSrc', newImageSrc);
+        const ImageResponse = await fetch(newImageSrc);
+        const buffer = await ImageResponse.buffer();
+        const base64 = buffer.toString('base64');
+        const filePath = path.resolve('files', `${index}.png`);
 
-        try {
-          const imageResponse = await fetch(newImageSrc);
-          const buffer = await imageResponse.buffer();
-          if (buffer.length === 0) {
-            console.warn(`⚠️ ${index}.png: buffer가 비어 있음`);
-            continue;
-          }
-          const filePath = path.resolve('files', `${index}.png`);
-          const pngStylePics = await sharp(buffer).png().toBuffer();
-          fs.writeFileSync(filePath, pngStylePics);
+        fs.writeFileSync(filePath, base64, { encoding: 'base64' });
+      });
 
-          console.log(`${index}.png 저장 완료`);
-        } catch (err) {
-          console.log('에러이다아', err);
-        }
-      }
       // 문제들 담는 HTML
       let problemPrompt = ``;
       let answerPrompt = ``;

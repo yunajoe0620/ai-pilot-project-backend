@@ -49,8 +49,6 @@ export class ProblemService {
           format: 'image,plaintext',
           imagemode: 'png',
         });
-        // http://api.wolframalpha.com/v2/query?appid=DEMO&input=population%20of%20france
-        console.log('response', response);
 
         if (response.success) {
           const ImageSrc = response?.pods[1]?.subpods[0]?.img.src;

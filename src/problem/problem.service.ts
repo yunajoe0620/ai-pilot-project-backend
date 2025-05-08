@@ -9,6 +9,7 @@ import * as moment from 'moment';
 import * as child from 'node:child_process';
 import OpenAI from 'openai';
 import * as path from 'path';
+
 const dotenv = require('dotenv');
 dotenv.config();
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI });
@@ -42,32 +43,22 @@ export class ProblemService {
     const results = [];
 
     for (const formula of formulaArray) {
-      console.log('formula', formula); // Plot[x^3, {x, -10, 10}]
       try {
-        const apiUrl =
-          'https://www.wolframcloud.com/obj/fineteacher1/expressionAPI';
-        const encodedFormula = encodeURIComponent(formula);
-        console.log('encodedFormmula', encodedFormula);
-        const response = await fetch(`${apiUrl}?expr=${encodedFormula}`);
-        if (!response.ok) {
-          throw new Error('API 호출 실패');
+        const response = await waApi.getFull({
+          input: formula,
+          ouput: 'json',
+          format: 'image,plaintext',
+          imagemode: 'png',
+        });
+        if (response.success) {
+          const ImageSrc = response?.pods[1]?.subpods[0]?.img.src;
+          const url = new URL(ImageSrc);
+          url.searchParams.set('MSPStoreType', 'image/png');
+          const newImageSrc = url.toString();
+          results.push({ formula, newImageSrc });
+        } else {
+          results.push({ formula, newImageSrc: 'NO IMAGE' });
         }
-        results.push(response);
-
-        // const response = await waApi.getFull({
-        //   input: formula,
-        //   ouput: 'json',
-        //   format: 'image,plaintext',
-        //   imagemode: 'png',
-        // });
-        // console.log('response', response);
-
-        // if (response.success) {
-        //   const ImageSrc = response?.pods[1]?.subpods[0]?.img.src;
-        //   results.push({ formula, ImageSrc });
-        // } else {
-        //   results.push({ formula, ImageSrc: 'NO IMAGE' });
-        // }
       } catch (error) {
         throw error;
       }
