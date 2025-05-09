@@ -3,9 +3,7 @@ import * as fs from 'fs';
 import fetch from 'node-fetch';
 import * as path from 'path';
 import { ProblemService } from './problem.service';
-
 const sharp = require('sharp');
-const { exec } = require('child_process');
 
 @Controller('problem')
 export class ProblemController {
@@ -321,41 +319,17 @@ export class ProblemController {
 
     try {
       //  수학공식을
-      const wolframCode = `Export["output.png",
-      Graphics3D[
-        {
-        {Opacity[0.3], Blue, InfinitePlane[{0, 0, 0}, {0, 0, 1}]},
-        {Opacity[0.7], Red, Sphere[{3, -2, 4}, 4]},
-        {PointSize[Large], Red, Point[{3, -2, 4}]},
-        {PointSize[Large], Darker[Blue], Point[{3, -2, 0}]},
-        {Thick, Green, Line[{{3, -2, 4}, {3, -2, 0}}]}
-        },
-        Axes -> True,
-        AxesLabel -> {"x", "y", "z"},
-        Boxed -> True,
-        PlotRange -> {{-2, 8}, {-7, 3}, {-1, 9}}
-       ]
-      ]`;
-
-      exec(
-        `wolframscript -code '${wolframCode.replace(/\n/g, ' ')}'`,
-        (error, stdout, stderr) => {
-          if (error) {
-            console.log('Wolfram Error', error);
-            return;
-          }
-          console.log(`stdout: ${stdout}`);
-          console.error(`stderr: ${stderr}`);
-
-          const filePath = path.resolve('files', 'output.png');
-        },
-      );
-      console.log('wolframCode', wolframCode);
-
-      return;
       let promptArray = [
-        'Graphics3D[{{Opacity[0.3], Blue, InfinitePlane[{0, 0, 0}, {0, 0, 1}]}, {Opacity[0.7], Red, Sphere[{3, -2, 4}, 4]}, {PointSize[Large], Red, Point[{3, -2, 4}]} {PointSize[Large], Darker[Blue], Point[{3, -2, 0}]}, {Thick, Green, Line[{{3, -2, 4}, {3, -2, 0}}]}}, Axes -> True,  AxesLabel -> {"x", "y", "z"},  Boxed -> True, PlotRange -> {{-2, 8}, {-7, 3}, {-1, 9}}]',
+        'Plot[x^3, {x, -10, 10}]',
+        'Plot[Power[x,3] - 6Power[x,2] + 4x + 12]',
+        'Plot[Log[x], {x, 0.1, 10}]',
+        'ParametricPlot[{Cos[t]^3, Sin[t]^3}, {t, 0, 2 Pi}]',
+        'ParametricPlot[{Sin[t], Sin[2 t]}, {t, 0, 2 Pi}]',
       ];
+      // 아래는 안된다. 흠
+      // let promptArray = [
+      //   'Graphics3D[{{Opacity[0.3], Blue, InfinitePlane[{0, 0, 0}, {0, 0, 1}]}, {Opacity[0.7], Red, Sphere[{3, -2, 4}, 4]}, {PointSize[Large], Red, Point[{3, -2, 4}]} {PointSize[Large], Darker[Blue], Point[{3, -2, 0}]}, {Thick, Green, Line[{{3, -2, 4}, {3, -2, 0}}]}}, Axes -> True,  AxesLabel -> {"x", "y", "z"},  Boxed -> True, PlotRange -> {{-2, 8}, {-7, 3}, {-1, 9}}]',
+      // ];
 
       const result =
         await this.problemServiceRepository.generateWolframProblems(

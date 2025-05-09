@@ -47,9 +47,10 @@ export class ProblemService {
         const response = await waApi.getFull({
           input: formula,
           ouput: 'json',
-          format: 'image,plaintext',
-          imagemode: 'png',
+          // format: 'image,plaintext',
+          // imagemode: 'png',
         });
+        console.log('response', response);
         if (response.success) {
           const ImageSrc = response?.pods[1]?.subpods[0]?.img.src;
           const url = new URL(ImageSrc);
