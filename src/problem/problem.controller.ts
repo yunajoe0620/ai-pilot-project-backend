@@ -1,7 +1,10 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
 import * as path from 'path';
+import { AiQuestionService } from 'src/ai-question/ai-question.service';
+import { AiUnitService } from 'src/ai-unit/ai-unit.service';
 import { ProblemService } from './problem.service';
 
 const sharp = require('sharp');
@@ -9,7 +12,144 @@ const { exec } = require('child_process');
 
 @Controller('problem')
 export class ProblemController {
-  constructor(private readonly problemServiceRepository: ProblemService) {}
+  constructor(
+    private readonly problemServiceRepository: ProblemService,
+    private readonly aiquestionServiceRepository: AiQuestionService,
+    private readonly aiunitServiceRepository: AiUnitService,
+  ) {}
+
+  // 데이터 저장
+  @Get('save')
+  async saveProblems() {
+    let school,
+      grade,
+      subject,
+      mainCategory,
+      subCategory,
+      subSubCategory,
+      quizSubject,
+      shortProblem,
+      highLevel,
+      mediumLevel,
+      lowLevel,
+      totalProblem;
+    try {
+      school = '고등학교';
+      grade = 1;
+      subject = '수학';
+      mainCategory = '고등수학(상)';
+      subCategory = '다항식';
+      subSubCategory = '다항식의 덧셈과 뺄셈';
+      quizSubject = '고등수학(상) 다항식 다항식의 덧셈과 뺄셈';
+      shortProblem = 2;
+      highLevel = 1;
+      mediumLevel = 1;
+      lowLevel = 0;
+      let prompt = '';
+      prompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 보내줘. 
+        난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${shortProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
+        난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
+
+         1. 문제 생성 시 필수 사항:  
+        - 각 문항의 수식은 MathML로 작성한다.  
+        - MathML 생성 시, 다음 오류를 반드시 피할 것:  
+          ❌ <mtable>을 <mo>, <mfenced>와 함께 사용 금지  
+          ❌ <math> 태그에 xmlns 속성을 중복 선언 금지 (한 번만 맨 처음 선언)  
+          ❌ <mrow> 안에 block-level 요소(<mtable>)만 있는 구조 금지  
+        -세 가지 오류(&lt;mtable>과 &lt;mo>, &lt;mfenced> 함께 사용 금지, xmlns 속성 중복 선언 금지, &lt;mrow> 안에 block-level 요소만 있는 구조 금지)를 반드시 지키기
+        - 모든 문항 생성 후, 각 문항의 표현이 올바른지, 계산 과정 및 답이 논리적으로 타당한지 자체적으로 점검하여 문제가 반드시 풀릴 수 있도록 검수한다.  
+        - 각 문항을 HTML 파일에 넣을 때는 반드시 아래의 템플릿을 지켜서 MathJax 호환성을 유지하도록 한다.
+
+        - 문제와 정답을 다른 HTML에 넣는다
+
+
+         2. 문제 생성 시 유의 사항:  
+          - MathML 수식 표기 오류 최소화 
+
+          - 논리적으로 일관되고 풀 수 있는 문제 생성
+
+          - 문제 난이도 명확성 증가
+
+          - HTML 구조 오류 제거
+
+          - 문제 출력 형식의 일관성 확보
+       
+         3. HTML  문제 출력 템플릿  
+        <!DOCTYPE html>  
+          <html lang="ko">  
+          <head>  
+            <meta charset="UTF-8">  
+            <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+            <title>${school} ${grade}${subject}${quizSubject} 문제 </title>  
+          </head>  
+          <body>  
+            <div class="question">  
+              <h3 class="level">[문제 번호] [난이도 표시: 쉬움/보통/어려움] [유형: 서술형]</h3>  
+              <p class="only-question">여기에 문제를 작성(MathML 코드 삽입)</p>  
+              </div>  
+            </body> 
+        </html> 
+        
+        4. HTML 정답 출력 템플릿
+        <!DOCTYPE html>  
+          <html lang="ko">  
+          <head>  
+            <meta charset="UTF-8">  
+            <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>  
+            <title>${school} ${grade}${subject}${quizSubject} 정답 </title>  
+          </head>  
+          <body>  
+            <div class="answer">  
+              <h2 class="only-answer">[실제 정답 값] </h2> 
+              <p class="explanation">문제에 대한 해설를 출력해줘(MathML 코드 삽입)</p>  
+              </div>  
+            </body> 
+        </html> 
+        5. **최종 출력 형식:**
+        다음과 같은 JSON 형식으로 구조화하여 리턴해줘.
+        {
+          "problemHtml": "[문제 HTML 내용]",
+          "answerHtml": "[정답 HTML 내용]"
+        }
+      `;
+
+      const result = await this.problemServiceRepository.prolemSaveToDB(prompt);
+      // console.log('결과다아아', result);
+
+      if (result.length === 0) {
+        throw new Error('문제가 생성되지 않았습니다');
+      }
+
+      // 우선 ai-unit 테이블에 값을 넣는다
+      // category (대, 중, 소 ) 별로 넣어야 한다.
+      // 대분류가 있을때
+      if (mainCategory) {
+        this.aiunitServiceRepository.insertAiUnit({
+          category_code: '',
+          parent_unit_id: null,
+        });
+      }
+      if (subCategory) {
+        this.aiunitServiceRepository.insertAiUnit({
+          category_code: '',
+          parent_unit_id: null,
+        });
+      }
+
+      for (let i = 0; i < result.length; i++) {
+        let value = result[i];
+        const problemHtml = value.problemHtml;
+        const answerHtml = value.answerHtml;
+
+        // problemHtml에서 class이름이 only-question의 값을 뽑느다.
+        console.log('problemHTML', problemHtml);
+
+        console.log('answerHtml', answerHtml);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
 
   @Post('generate/gemini')
   async createGeminiProblem(@Body() data: any) {
@@ -272,6 +412,20 @@ export class ProblemController {
         );
 
       const { problemHtml, answerHtml } = result;
+
+      const data2 = {
+        unit_id: randomUUID(),
+        suneung_yn: 'N',
+        difficulty_code: 'MEDIUM',
+        type_code: '단답형',
+        question_text: problemHtml,
+        answer_text: '4',
+        explanation_text: '4는 1, 2, 4로 나누어 떨어지므로 소수가 아닙니다.',
+        image_yn: 'N',
+        wolfram_id: null,
+        media_url: null,
+        national_code: 'KOR',
+      };
 
       const cleanedproblemHtml = problemHtml
         .replace(/^```html\s*/, '')

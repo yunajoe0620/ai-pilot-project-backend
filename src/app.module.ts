@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { AiQuestionModule } from './ai-question/ai-question.module';
+import { AiUnitModule } from './ai-unit/ai-unit.module';
 import { HtmlModule } from './html/html.module';
 import { PdfModule } from './pdf/pdf.module';
 import { ProblemModule } from './problem/problem.module';
@@ -27,7 +29,7 @@ const dbConfig: TypeOrmModuleOptions = {
 
 @Module({
   imports: [
-    // TypeOrmModule.forRoot(dbConfig),
+    TypeOrmModule.forRoot(dbConfig),
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
@@ -37,6 +39,9 @@ const dbConfig: TypeOrmModuleOptions = {
     RecommendationsModule,
     MiddleSchoolModule,
     HtmlModule,
+    AiQuestionModule,
+    AiUnitModule,
+
     // sevverd에서 static 파일을 보려면은 아래와 같은 경로로 간다.
     // ServeStaticModule.forRoot({
     //   rootPath: join(__dirname, '..', 'files', 'latex'),

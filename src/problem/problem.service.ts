@@ -132,46 +132,6 @@ export class ProblemService {
     });
   }
 
-  // gpt
-  async generateProblems(prompt: string, model: string) {
-    try {
-      const response = await openai.chat.completions.create({
-        model: model,
-        messages: [
-          {
-            role: 'system',
-            content: [
-              {
-                type: 'text',
-                text: `
-                    You are a math tutor that answers in korean                  
-                  `,
-              },
-            ],
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: prompt,
-              },
-            ],
-          },
-        ],
-        response_format: {
-          type: 'json_object',
-        },
-        temperature: 0.7,
-      });
-      return {
-        response: response.choices[0].message.content,
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
   async generateGeminiProblemsWithHtmlFormat(prompt: string) {
     try {
       const response = await ai.models.generateContent({
@@ -212,6 +172,56 @@ export class ProblemService {
         problemHtml: parsedResponse.problemHtml,
         answerHtml: parsedResponse.answerHtml,
       };
+    } catch (error) {
+      console.error('Error generating Gemini problems:', error);
+    }
+  }
+
+  async prolemSaveToDB(prompt: string) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.0-flash-lite',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                problemHtml: {
+                  type: Type.STRING,
+                  description: '문제 HTML 형식',
+                },
+                answerHtml: {
+                  type: Type.STRING,
+                  description: '답안 HTML 형식',
+                },
+              },
+              required: ['problemHtml', 'answerHtml'],
+            },
+          },
+        },
+      });
+
+      console.log('respnse입니다아아', response);
+      console.log('gggg', response.candidates[0].content.parts[0]);
+
+      if (
+        !response.candidates ||
+        response.candidates.length === 0 ||
+        !response.candidates[0].content ||
+        !response.candidates[0].content.parts ||
+        response.candidates[0].content.parts.length === 0
+      ) {
+        return { problemHtml: null, answerHtml: null };
+      }
+
+      const responseText = response.candidates[0].content.parts[0].text;
+
+      const parsedResponse = JSON.parse(responseText);
+
+      return parsedResponse;
     } catch (error) {
       console.error('Error generating Gemini problems:', error);
     }
