@@ -12,17 +12,9 @@ export class AiUnitService {
   ) {}
 
   async insertAiUnit(data: Partial<AiUnit>) {
-    console.log('data', data);
+    // save메서드는, 성공시 update랑 insert의 메서드를 수행하면서, entity 자체를 return한다고 한다.
+    const result = await this.aiUnitRepository.save(data);
 
-    const unitData = {
-      category_code: '대/중/소분류 코드',
-      parent_unit_id: '',
-      title: '',
-      subject_code: '수학',
-      grade_level_code: '31',
-      staff_name: null,
-    };
-
-    return await this.aiUnitRepository.save(data);
+    return result.id;
   }
 }

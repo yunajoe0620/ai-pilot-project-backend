@@ -39,6 +39,7 @@
     "@nestjs/serve-static": "^5.0.3",
     "@nestjs/typeorm": "^11.0.0",
     "@wolfram-alpha/wolfram-alpha-api": "^23.1004.144821-RELEASE",
+    "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
     "http-proxy-middleware": "^3.0.5",
     "moment": "^2.30.1",

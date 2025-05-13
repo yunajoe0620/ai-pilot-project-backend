@@ -204,9 +204,6 @@ export class ProblemService {
         },
       });
 
-      console.log('respnse입니다아아', response);
-      console.log('gggg', response.candidates[0].content.parts[0]);
-
       if (
         !response.candidates ||
         response.candidates.length === 0 ||

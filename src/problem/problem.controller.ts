@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
+import * as cheerio from 'cheerio';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
@@ -29,10 +30,17 @@ export class ProblemController {
       subSubCategory,
       quizSubject,
       shortProblem,
+      // 난이도
+      competition,
+      advanced,
       highLevel,
       mediumLevel,
       lowLevel,
-      totalProblem;
+      gradeLevelCode,
+      // 대, 중, 소 코드
+      mainCategoryId,
+      subCategoryId,
+      subSubCategoryId;
     try {
       school = '고등학교';
       grade = 1;
@@ -41,14 +49,26 @@ export class ProblemController {
       subCategory = '다항식';
       subSubCategory = '다항식의 덧셈과 뺄셈';
       quizSubject = '고등수학(상) 다항식 다항식의 덧셈과 뺄셈';
-      shortProblem = 2;
+      shortProblem = 5;
+
+      // 경시대회
+      competition = 0;
+
+      // 심화
+      advanced = 2;
+      // 고난이도
       highLevel = 1;
+      // 보통난이도
       mediumLevel = 1;
-      lowLevel = 0;
+
+      // 기본난이도
+      lowLevel = 1;
+      gradeLevelCode = '31';
+
       let prompt = '';
       prompt = `${school} ${grade}${subject}${quizSubject}에 관한 주관식 문제 ${shortProblem}개를 보내줘. 
-        난이도 상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${shortProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
-        난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
+        난이도가 경시대회 수준의 문제는 ${competition}개, 심화 문제는 ${advanced}개,  상 문제는 ${highLevel}개, 중 문제는 ${mediumLevel}개, 하 문제는 ${lowLevel}개 이고. 난이도 상, 중, 하 문제 갯수의 합은 ${shortProblem}갯수와 같아야 해. 문제 난이도를 섞어서 보여줘.  
+        난이도 경시대회 수준의 문제는 국제/국내 수학 경시대회 수준(IMO, KMO), 난이도 심화 문제는 수학 올림피아트 초급 수준, 난이도 상 문제는 복합적 추론이 필요하거나, 고난이도 연산 및 응용이 요구되어야 해. 난이도 중 문제는 개념 응용을 묻는 문제로 계산이 필요하거나 간단한 추론을 요구되어야 해. 난이도 하 문제는 기초 개념을 직접적으로 묻는 간단한 문제  
 
          1. 문제 생성 시 필수 사항:  
         - 각 문항의 수식은 MathML로 작성한다.  
@@ -84,7 +104,7 @@ export class ProblemController {
           </head>  
           <body>  
             <div class="question">  
-              <h3 class="level">[문제 번호] [난이도 표시: 쉬움/보통/어려움] [유형: 서술형]</h3>  
+              <h3 class="level">[문제 번호] [난이도 표시: 고난이도/보통/기본] [유형: 단답형]</h3>  
               <p class="only-question">여기에 문제를 작성(MathML 코드 삽입)</p>  
               </div>  
             </body> 
@@ -101,7 +121,7 @@ export class ProblemController {
           <body>  
             <div class="answer">  
               <h2 class="only-answer">[실제 정답 값] </h2> 
-              <p class="explanation">문제에 대한 해설를 출력해줘(MathML 코드 삽입)</p>  
+              <p class="answer-explanation">문제에 대한 해설를 출력해줘(MathML 코드 삽입)</p>  
               </div>  
             </body> 
         </html> 
@@ -114,7 +134,6 @@ export class ProblemController {
       `;
 
       const result = await this.problemServiceRepository.prolemSaveToDB(prompt);
-      // console.log('결과다아아', result);
 
       if (result.length === 0) {
         throw new Error('문제가 생성되지 않았습니다');
@@ -122,29 +141,83 @@ export class ProblemController {
 
       // 우선 ai-unit 테이블에 값을 넣는다
       // category (대, 중, 소 ) 별로 넣어야 한다.
-      // 대분류가 있을때
+      // 대분류
       if (mainCategory) {
-        this.aiunitServiceRepository.insertAiUnit({
-          category_code: '',
+        const id = await this.aiunitServiceRepository.insertAiUnit({
+          category_code: 'L',
           parent_unit_id: null,
+          title: mainCategory,
+          subject_code: subject,
+          grade_level_code: gradeLevelCode,
+          staff_name: null,
         });
+        mainCategoryId = id;
       }
-      if (subCategory) {
-        this.aiunitServiceRepository.insertAiUnit({
-          category_code: '',
-          parent_unit_id: null,
+
+      if (subCategory && mainCategoryId) {
+        const id = await this.aiunitServiceRepository.insertAiUnit({
+          category_code: 'M',
+          parent_unit_id: mainCategoryId,
+          title: subCategory,
+          subject_code: subject,
+          grade_level_code: gradeLevelCode,
+          staff_name: null,
         });
+        subCategoryId = id;
       }
 
-      for (let i = 0; i < result.length; i++) {
-        let value = result[i];
-        const problemHtml = value.problemHtml;
-        const answerHtml = value.answerHtml;
+      if (subSubCategory && subCategoryId) {
+        const id = await this.aiunitServiceRepository.insertAiUnit({
+          category_code: 'S',
+          parent_unit_id: subCategoryId,
+          title: subSubCategory,
+          subject_code: subject,
+          grade_level_code: gradeLevelCode,
+          staff_name: null,
+        });
+        subSubCategoryId = id;
+      }
 
-        // problemHtml에서 class이름이 only-question의 값을 뽑느다.
-        console.log('problemHTML', problemHtml);
+      // subSubCateogryId를 unit_id로 가지고 문제를 만들고, ai_question에 데이터를 넣자
+      if (subSubCategoryId) {
+        for (let i = 0; i < result.length; i++) {
+          let value = result[i];
+          const problemHtml = value.problemHtml;
+          const answerHtml = value.answerHtml;
+          // problemHtml에서 class이름이 only-question의 값을 뽑느다.
+          const $problem = cheerio.load(problemHtml);
+          const $answer = cheerio.load(answerHtml);
+          const questionText = $problem('.only-question').text()?.trim(); // 문제만
+          const levelText = $problem('.level').text()?.trim(); // 난이도 && 유형
+          const difficultyMatch = levelText.match(/\[난이도:\s*(.*?)\]/);
+          const typeMatch = levelText.match(/\[유형:\s*(.*?)\]/);
+          const answerText = $answer('.only-answer').text()?.trim(); // 답만
+          const answerExplanation = $answer('.answer-explanation')
+            .text()
+            ?.trim();
+          console.log('문제만 뽑아따아 ===========>>>>>>', questionText);
+          console.log('답만 뽑아따 --------->>>>>>>>>', answerText);
+          console.log('해설 ----->>>>>>>>', answerExplanation);
+          console.log(difficultyMatch?.[1], 'typeMatch ', typeMatch?.[1]);
+          // html태그만?
+          // const element = $('.only-question').first();
+          // console.log('element', $.html(element)?.trim());
 
-        console.log('answerHtml', answerHtml);
+          //
+          // this.aiquestionServiceRepository.insertAiQuestion({
+          //   unit_id: subSubCategoryId,
+          //   suneung_yn: 'N',
+          //   difficulty_code: null,
+          //   type_code: null,
+          //   question_text: '문제',
+          //   answer_text: '정답만!',
+          //   explanation_text: '해설만!',
+          //   image_yn: 'N',
+          //   wolfram_id: null,
+          //   media_url: null,
+          //   national_code: 'KOR',
+          // });
+        }
       }
     } catch (error) {
       throw error;
