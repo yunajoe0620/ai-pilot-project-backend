@@ -6,9 +6,7 @@ import * as path from 'path';
 import { AiQuestionService } from 'src/ai-question/ai-question.service';
 import { AiUnitService } from 'src/ai-unit/ai-unit.service';
 import { Difficulty, Question } from 'src/enum/ai-question';
-import mathJson from '../../src/math.json';
 import { ProblemService } from './problem.service';
-console.log('MATHJSO --->>>>>>>', mathJson);
 
 const sharp = require('sharp');
 const { exec } = require('child_process');
@@ -47,24 +45,13 @@ export class ProblemController {
       detailCategoryId;
 
     try {
-      school = '초등학교';
+      school = '중학교';
       grade = 1;
       subject = '수학';
-      mainCategory = '수와 연산';
-      subCategory = '';
+      mainCategory = '자연수';
+      subCategory = '소수와 합성수';
       subSubCategory = '';
       detailCategory = '';
-      const key = `${school}-${grade}학년-${subject}-${mainCategory}`;
-      console.log('key', key);
-      const filePath = path.resolve('math.json');
-      console.log('fo;e{at');
-
-      // const filePath = path.join(__dirname, '..', 'data', 'math.json');
-      // const fileContent = fs.readFileSync(filePath, 'utf-8');
-      console.log('key', key);
-      // const array = mathJson[key];
-      console.log('array데이터', mathJson[key]);
-
       quizSubject = `${mainCategory}${subCategory}${subSubCategory}${detailCategory}`;
 
       shortProblem = 5;
@@ -313,7 +300,7 @@ export class ProblemController {
         const answerHtml = value.answerHtml;
         const $problem = cheerio.load(problemHtml);
         const $answer = cheerio.load(answerHtml);
-        const questionHtml = $problem('.only-question').html()?.trim();
+        const questionHtml = $problem('.only-question').html()?.trim(); //
 
         const levelText = $problem('.level').text()?.trim();
         const difficultyMatch = levelText.match(/\[난이도:\s*(.*?)\]/); // 난이도

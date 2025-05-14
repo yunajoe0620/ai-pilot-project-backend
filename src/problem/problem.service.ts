@@ -181,6 +181,10 @@ export class ProblemService {
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.0-flash-lite',
+        // model: 'gemini-2.5-pro-preview-05-06',
+        // model: 'gemini-2.5-pro-exp-03-25',
+        // model: 'gemini-2.5-pro-preview-03-25',
+        // model: 'gemini-2.5-pro-preview-05-06',
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
@@ -217,6 +221,7 @@ export class ProblemService {
       const responseText = response.candidates[0].content.parts[0].text;
 
       const parsedResponse = JSON.parse(responseText);
+      console.log('parsedRseponse', parsedResponse);
 
       return parsedResponse;
     } catch (error) {

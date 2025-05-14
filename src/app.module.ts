@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { AiQuestion } from './ai-question/ai-question.entity';
 import { AiQuestionModule } from './ai-question/ai-question.module';
 import { AiUnit } from './ai-unit/ai-unit.entity';
 import { AiUnitModule } from './ai-unit/ai-unit.module';
@@ -24,13 +25,13 @@ const dbConfig: TypeOrmModuleOptions = {
   username: 'postgres',
   password: '1234',
   database: 'ai-database',
-  entities: [AiUnit],
+  entities: [AiUnit, AiQuestion],
   synchronize: SYNC,
 } as TypeOrmModuleOptions;
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AiUnit]),
+    // TypeOrmModule.forFeature([AiUnit]),
     TypeOrmModule.forRoot(dbConfig),
     ConfigModule.forRoot({
       envFilePath: '.env',

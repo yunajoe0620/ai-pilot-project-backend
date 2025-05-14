@@ -1,4 +1,4 @@
-import { Difficulty, QuestionType } from 'src/enum/ai-question';
+import { Difficulty, Question } from 'src/enum/ai-question';
 import {
   Column,
   CreateDateColumn,
@@ -19,11 +19,11 @@ export class AiQuestion {
   @Column({ default: 'N' })
   suneung_yn: string;
 
-  @Column({ type: 'enum' })
+  @Column({ type: 'enum', enum: Difficulty })
   difficulty_code: Difficulty;
 
-  @Column({ type: 'enum' })
-  type_code: QuestionType;
+  @Column({ type: 'enum', enum: Question })
+  type_code: Question;
 
   @Column('text')
   question_text: string;

@@ -22,21 +22,20 @@ export class AiUnit {
   @Column({ type: 'varchar' })
   title: string;
 
-  @Column({
-    type: 'enum',
-    enum: Subject,
-  })
+  @Column({ type: 'enum', enum: Subject })
   subject_code: Subject;
 
   @Column({
     name: 'grade_level_code',
-    type: 'enum',
     enum: SchoolLevel,
   })
   grade_level_code: SchoolLevel;
 
   @Column({ type: 'varchar', nullable: true })
   staff_name?: string;
+
+  @Column({ type: 'int' })
+  exposure_order: number;
 
   @CreateDateColumn({ type: 'timestamptz', precision: 3 })
   created_at: Date;
